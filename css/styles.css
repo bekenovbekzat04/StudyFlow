@@ -297,8 +297,8 @@ button:focus-visible,a:focus-visible,select:focus-visible,.search-box:focus-with
 .subject-task-count{font-size:12px}.subject-card-actions button{font-size:11px}
 .archive-heading p,.archive-task-subject,.archive-task-meta{font-size:12px}.archive-task-copy h2{font-size:15px}
 
-/* A bounded Dashboard grid keeps the Today card aligned with the right stack and gives its list a real scroll viewport. */
-.content-grid{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-rows:minmax(0,1.15fr) minmax(0,1fr);height:clamp(427px,56vh,600px);align-items:stretch;gap:17px}
+/* A bounded Dashboard grid reserves enough room for the week agenda and progress card. */
+.content-grid{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-rows:minmax(320px,1.15fr) minmax(190px,1fr);height:clamp(527px,56vh,680px);align-items:stretch;gap:17px}
 .right-column{display:contents}
 .dashboard-today-panel{grid-column:1;grid-row:1 / span 2;height:auto;min-height:0;max-height:none;overflow:hidden}
 .dashboard-today-list{display:grid;flex:1 1 0%;height:0;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#d9d6eb transparent;scrollbar-gutter:stable;grid-auto-rows:78px;align-content:start}
@@ -308,7 +308,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,.search-box:focus-with
 .dashboard-today-copy{overflow:hidden}
 .dashboard-today-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dashboard-today-panel>.empty-state:not(.hidden){display:grid;flex:1 1 auto;min-height:0;place-items:center}
-.right-column>.week-panel{grid-column:2;grid-row:1;height:auto;min-height:220px;max-height:none}
+.right-column>.week-panel{grid-column:2;grid-row:1;height:auto;min-height:320px;max-height:none}
 .right-column>.progress-panel{grid-column:2;grid-row:2;min-height:190px}
 .week-panel>.week-days{margin-block:14px 10px}
 .week-panel>.dashboard-deadlines-list{min-height:0}
