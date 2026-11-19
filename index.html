@@ -5,7 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="StudyFlow — smart student planner and academic progress tracker.">
   <title>StudyFlow — Student Planner</title>
-  <link rel="icon" type="image/png" href="./favicon.png">
+  <link id="site-favicon" rel="icon" type="image/png" sizes="1254x1254" href="./favicon.png?v=2">
+  <script>
+    (() => {
+      const favicon = document.getElementById("site-favicon");
+      if (location.pathname === "/StudyFlow" || location.pathname.startsWith("/StudyFlow/")) {
+        favicon.href = "/StudyFlow/favicon.png?v=2";
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
