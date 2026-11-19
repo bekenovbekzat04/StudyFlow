@@ -150,8 +150,9 @@ function initializeApp() {
     const todayTasks = state.tasks.filter(task => {
       const due = parseTaskDate(task.dueDate);
       return due && dateKey(due) === todayKey;
-    }).sort((a, b) => Number(a.status === "completed") - Number(b.status === "completed") ||
+    }).sort((a, b) =>
       ({ High: 0, Medium: 1, Low: 2 }[a.priority] ?? 3) - ({ High: 0, Medium: 1, Low: 2 }[b.priority] ?? 3) ||
+      Number(a.status === "completed") - Number(b.status === "completed") ||
       String(a.title).localeCompare(String(b.title), dashboardLocale()));
     $("#dashboard-today-tasks").innerHTML = todayTasks.map(task => {
       const subject = state.subjects.find(item => String(item.id) === String(task.subjectId));
@@ -166,6 +167,10 @@ function initializeApp() {
     renderDashboardWeek();
   }
   pageContent.addEventListener("click", event => {
+    if (event.target.closest("[data-dashboard-add-task]")) {
+      tasksModule?.openDashboardAddTask();
+      return;
+    }
     if (event.target.closest("[data-dashboard-week-more]")) {
       weekMoreDialog.showModal();
       return;

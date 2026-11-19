@@ -36,7 +36,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   const view = document.createElement("section");
   view.id = "tasks-page";
   view.className = "tasks-workspace hidden";
-  view.innerHTML = `<div class="tasks-workspace-heading"><div><span class="eyebrow">${t("layout.workspace")}</span><h1>${t("tasks.workspaceTitle")}</h1><p>${t("tasks.workspaceSubtitle")}</p><div class="task-status-tabs" role="tablist" aria-label="${t("tasks.taskViews")}"><button type="button" role="tab" id="tasks-tab-active" aria-controls="task-list" aria-selected="true" data-task-tab="active"><span>${t("tasks.activeTab")}</span><span class="task-tab-count" data-task-tab-count="active">0</span></button><button type="button" role="tab" id="tasks-tab-completed" aria-controls="task-list" aria-selected="false" data-task-tab="completed" tabindex="-1"><span>${t("tasks.completedTab")}</span><span class="task-tab-count" data-task-tab-count="completed">0</span></button></div></div><button type="button" class="primary-button" id="tasks-add-task">${taskIcon("plus")}<span class="tasks-add-label">${t("tasks.add")}</span></button></div><div class="tasks-workspace-toolbar"><label class="tasks-search-field">${taskIcon("search")}<input id="task-workspace-search" type="search" placeholder="${t("layout.search")}" aria-label="${t("layout.searchLabel")}"></label><div class="tasks-filter-field"><span>${t("tasks.subject")}</span><select id="task-subject-filter" aria-label="${t("tasks.subjectFilter")}"></select></div><div class="tasks-filter-field"><span>${t("tasks.status")}</span><select id="task-status-filter" aria-label="${t("tasks.statusFilter")}"></select></div><div class="tasks-filter-field"><span>${t("tasks.priority")}</span><select id="task-priority-filter" aria-label="${t("tasks.priorityFilter")}"></select></div></div><section class="panel tasks-workspace-list-panel"><div class="tasks-result-heading"><h2>${t("tasks.workspaceListTitle")}</h2><span id="tasks-result-count"></span></div><div class="task-list" id="task-list" role="tabpanel" aria-labelledby="tasks-tab-active" tabindex="0"></div><div class="empty-state hidden" id="empty-state" aria-live="polite"></div></section>`;
+  view.innerHTML = `<div class="tasks-workspace-heading"><div><span class="eyebrow">${t("layout.workspace")}</span><h1>${t("tasks.workspaceTitle")}</h1><p>${t("tasks.workspaceSubtitle")}</p><div class="task-status-tabs" role="tablist" aria-label="${t("tasks.taskViews")}"><button type="button" role="tab" id="tasks-tab-active" aria-controls="task-list" aria-selected="true" data-task-tab="active"><span>${t("tasks.activeTab")}</span><span class="task-tab-count" data-task-tab-count="active">0</span></button><button type="button" role="tab" id="tasks-tab-completed" aria-controls="task-list" aria-selected="false" data-task-tab="completed" tabindex="-1"><span>${t("tasks.completedTab")}</span><span class="task-tab-count" data-task-tab-count="completed">0</span></button></div></div><button type="button" class="primary-button" id="tasks-add-task">${taskIcon("plus")}<span class="tasks-add-label">${t("tasks.add")}</span></button></div><div class="tasks-workspace-toolbar"><label class="tasks-search-field">${taskIcon("search")}<input id="task-workspace-search" type="search" placeholder="${t("layout.search")}" aria-label="${t("layout.searchLabel")}"></label><div class="tasks-filter-field"><span>${t("tasks.subject")}</span><select id="task-subject-filter" aria-label="${t("tasks.subjectFilter")}"></select></div><div class="tasks-filter-field"><span>${t("tasks.status")}</span><select id="task-status-filter" aria-label="${t("tasks.statusFilter")}"></select></div><div class="tasks-filter-field"><span>${t("tasks.priority")}</span><select id="task-priority-filter" aria-label="${t("tasks.priorityFilter")}"></select></div><label class="tasks-filter-field"><span>${t("tasks.sortLabel")}</span><select id="task-sort-order" aria-label="${t("tasks.sortLabel")}"></select></label></div><section class="panel tasks-workspace-list-panel"><div class="tasks-result-heading"><h2>${t("tasks.workspaceListTitle")}</h2><span id="tasks-result-count"></span></div><div class="task-list" id="task-list" role="tabpanel" aria-labelledby="tasks-tab-active" tabindex="0"></div><div class="empty-state hidden" id="empty-state" aria-live="polite"></div></section>`;
   pageContent.append(view);
   const list = $("#task-list", view);
   const overdueView = document.createElement("section");
@@ -68,6 +68,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   let visibleTaskIds = [];
   let visibleOverdueIds = [];
   let taskTab = "active";
+  let taskSortOrder = "due-earliest";
   let overdueSubject = "all";
   let overduePriority = "all";
   let tasksLoading = false;
@@ -86,6 +87,7 @@ export function initTasks({ state, onDataChanged, notify }) {
       subjectId: row.subject_id,
       subject: subject?.name || null,
       dueDate: row.due_date,
+      createdAt: row.created_at,
       priority: normalizePriority(row.priority),
       status: normalizeStatus(row.status),
       deletedAt: row.deleted_at || null
@@ -132,6 +134,33 @@ export function initTasks({ state, onDataChanged, notify }) {
     subjectDropdown.refresh();
     statusDropdown.refresh();
     priorityDropdown.refresh();
+    populateSortOptions();
+  }
+
+  function populateSortOptions() {
+    const select = $("#task-sort-order", view);
+    const value = taskSortOrder;
+    select.innerHTML = `<option value="due-earliest">${t("tasks.sortDueEarliest")}</option><option value="due-latest">${t("tasks.sortDueLatest")}</option><option value="created-recent">${t("tasks.sortRecentlyCreated")}</option><option value="created-oldest">${t("tasks.sortOldestCreated")}</option>`;
+    select.value = value;
+  }
+
+  function sortTaskResults(tasks) {
+    const dueOrder = taskSortOrder === "due-latest" ? -1 : 1;
+    const createdOrder = taskSortOrder === "created-oldest" ? 1 : -1;
+    return tasks.map((task, index) => ({ task, index })).sort((a, b) => {
+      let comparison = 0;
+      if (taskSortOrder === "due-earliest" || taskSortOrder === "due-latest") {
+        const aHasDate = Boolean(a.task.dueDate);
+        const bHasDate = Boolean(b.task.dueDate);
+        if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
+        if (aHasDate) comparison = String(a.task.dueDate).localeCompare(String(b.task.dueDate)) * dueOrder;
+      } else {
+        const aCreated = Date.parse(a.task.createdAt || "") || 0;
+        const bCreated = Date.parse(b.task.createdAt || "") || 0;
+        comparison = (aCreated - bCreated) * createdOrder;
+      }
+      return comparison || a.index - b.index;
+    }).map(item => item.task);
   }
 
   function populateOverdueFilters() {
@@ -268,13 +297,13 @@ export function initTasks({ state, onDataChanged, notify }) {
       completeAction.textContent = t(taskTab === "completed" ? "tasks.returnSelectedActive" : "bulk.complete");
       completeAction.classList.toggle("bulk-return-button", taskTab === "completed");
     }
-    const filtered = state.tasks.filter(task =>
+    const filtered = sortTaskResults(state.tasks.filter(task =>
       (taskTab === "completed" ? task.status === "completed" : task.status !== "completed") &&
       (state.activeFilter === "all" || task.status === state.activeFilter) &&
       (state.taskSubjectFilter === "all" || (state.taskSubjectFilter === "none" ? task.subjectId == null : String(task.subjectId) === state.taskSubjectFilter)) &&
       (state.taskPriorityFilter === "all" || task.priority === state.taskPriorityFilter) &&
       `${task.title} ${task.subject || t("tasks.noSubject")}`.toLocaleLowerCase().includes(state.searchTerm)
-    );
+    ));
     list.innerHTML = renderTaskRows(filtered);
     visibleTaskIds = filtered.map(task => String(task.id));
     taskBulk.sync(visibleTaskIds);
@@ -304,7 +333,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     renderOverdue();
   }
 
-  function openDialog(task = null) {
+  function openDialog(task = null, { dueToday = false } = {}) {
     form.reset();
     editingTaskId = task ? task.id : null;
     populateSubjectSelect(task?.subjectId ?? "");
@@ -316,6 +345,8 @@ export function initTasks({ state, onDataChanged, notify }) {
       $("#task-date").value = task.dueDate || "";
       $("#task-priority").value = task.priority;
       $("#task-status").value = task.status;
+    } else if (dueToday) {
+      $("#task-date").value = localDateKey();
     }
     $("#task-form [type=submit]").textContent = task ? t("tasks.save") : t("tasks.create");
     dialog.showModal();
@@ -340,6 +371,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     view.querySelector(".tasks-workspace-toolbar .tasks-filter-field:nth-child(2) span").textContent = t("tasks.subject");
     view.querySelector(".tasks-workspace-toolbar .tasks-filter-field:nth-child(3) span").textContent = t("tasks.status");
     view.querySelector(".tasks-workspace-toolbar .tasks-filter-field:nth-child(4) span").textContent = t("tasks.priority");
+    view.querySelector(".tasks-workspace-toolbar .tasks-filter-field:nth-child(5) span").textContent = t("tasks.sortLabel");
     $("#task-workspace-search", view).placeholder = t("layout.search");
     $("#task-workspace-search", view).setAttribute("aria-label", t("layout.searchLabel"));
     $("#task-subject-filter", view).setAttribute("aria-label", t("tasks.subjectFilter"));
@@ -506,7 +538,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     if (event.target.closest("[data-bulk-complete]")) runBulkAction("complete", overdueBulk);
     else if (event.target.closest("[data-bulk-archive]")) runBulkAction("archive", overdueBulk);
   });
-  $("#add-task-top").addEventListener("click", () => openDialog());
+  $("#add-task-top").addEventListener("click", () => openDialog(null, { dueToday: true }));
   $("#tasks-add-task", view).addEventListener("click", () => openDialog());
   $("#close-task-dialog").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
   $("#cancel-task").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
@@ -569,6 +601,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   $("#task-subject-filter", view).addEventListener("change", event => { state.taskSubjectFilter = event.target.value; render(); });
   $("#task-status-filter", view).addEventListener("change", event => { state.activeFilter = event.target.value; render(); });
   $("#task-priority-filter", view).addEventListener("change", event => { state.taskPriorityFilter = event.target.value; render(); });
+  $("#task-sort-order", view).addEventListener("change", event => { taskSortOrder = event.target.value; render(); });
   searchResults.addEventListener("click", event => {
     const result = event.target.closest("[data-search-task]");
     if (!result) return;
@@ -582,7 +615,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     if (event.key === "Escape") closeSearchResults();
   });
 
-  return { view, overdueView, load, render, renderOverdue, refreshLanguage, populateSubjectSelect, openTaskById, syncSubjectNames, applyRow, closeSearchResults };
+  return { view, overdueView, load, render, renderOverdue, refreshLanguage, populateSubjectSelect, openTaskById, openDashboardAddTask: () => openDialog(null, { dueToday: true }), syncSubjectNames, applyRow, closeSearchResults };
 }
 
 

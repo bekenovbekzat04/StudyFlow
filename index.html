@@ -120,7 +120,11 @@
               <button class="text-button" data-open-view="tasks" aria-label="View all tasks" data-i18n-aria="dashboard.viewAll"><span data-i18n="dashboard.viewAll">View all</span> <span aria-hidden="true">→</span></button>
             </div>
             <div class="dashboard-today-list" id="dashboard-today-tasks"></div>
-            <div class="empty-state hidden" id="dashboard-today-empty" data-i18n="dashboard.noTasksToday">No tasks are due today.</div>
+            <div class="dashboard-today-empty empty-state hidden" id="dashboard-today-empty" aria-live="polite">
+              <span class="dashboard-today-empty-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><path d="M9 3h6v4H9zM8 14l2.5 2.5L16 11"></path></svg></span>
+              <p data-i18n="dashboard.noTasksToday">No tasks are due today.</p>
+              <button type="button" class="primary-button" data-dashboard-add-task data-i18n="dashboard.addTask">Add new task</button>
+            </div>
           </section>
 
           <div class="right-column">
