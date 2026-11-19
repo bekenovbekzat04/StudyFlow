@@ -1,0 +1,16 @@
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+supabase/.env
+
+# Local tooling and generated output
+node_modules/
+supabase/.temp/
+_site/
+dist/
+coverage/
+
+# Operating-system files
+.DS_Store
+Thumbs.db

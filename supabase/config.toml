@@ -1,0 +1,6 @@
+[functions.account-lifecycle]
+verify_jwt = true
+
+[functions.cleanup-accounts]
+# The handler checks a separate high-entropy token stored as an Edge secret.
+verify_jwt = false
