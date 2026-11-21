@@ -119,7 +119,10 @@ function initializeApp() {
       const color = subject ? validSubjectColor(subject.color) : "#ffffff";
       const accent = subject ? color : "#d8dbe5";
       const statusKey = task.status === "completed" ? "tasks.completed" : task.status === "progress" ? "tasks.inProgress" : "tasks.toDo";
-      return `<button type="button" class="agenda-item dashboard-deadline-item ${subject ? "" : "is-no-subject"}" data-dashboard-task="${escapeHTML(task.id)}" style="--subject-color:${accent}"><span class="agenda-time">${escapeHTML(formatDue(dateKey(due), getLanguage()))}</span><span class="agenda-dot ${subject ? (color.toLowerCase() === "#ffffff" ? "is-white-subject-dot" : "") : "is-no-subject-dot"}" style="background-color:${color}"></span><span class="dashboard-deadline-copy"><strong>${escapeHTML(task.title)}</strong><small><span class="task-subject-chip ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span> · ${t(statusKey)} · ${t(`tasks.${String(task.priority || "medium").toLowerCase()}`)}</small></span></button>`;
+      const subtaskCount = task.subtasks?.length || 0;
+      const completedSubtasks = task.subtasks?.filter(subtask => subtask.is_completed).length || 0;
+      const progress = subtaskCount ? ` · ${completedSubtasks}/${subtaskCount}` : "";
+      return `<button type="button" class="agenda-item dashboard-deadline-item ${subject ? "" : "is-no-subject"}" data-dashboard-task="${escapeHTML(task.id)}" style="--subject-color:${accent}"><span class="agenda-time">${escapeHTML(formatDue(dateKey(due), getLanguage()))}</span><span class="agenda-dot ${subject ? (color.toLowerCase() === "#ffffff" ? "is-white-subject-dot" : "") : "is-no-subject-dot"}" style="background-color:${color}"></span><span class="dashboard-deadline-copy"><strong>${escapeHTML(task.title)}</strong><small><span class="task-subject-chip ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span> · ${t(statusKey)} · ${t(`tasks.${String(task.priority || "medium").toLowerCase()}`)}${progress}</small></span></button>`;
     };
     const visibleDeadlines = scheduled.slice(0, 3);
     const extraCount = scheduled.length - visibleDeadlines.length;
@@ -159,7 +162,10 @@ function initializeApp() {
       const color = subject ? validSubjectColor(subject.color) : "#ffffff";
       const dotClass = subject ? (color.toLowerCase() === "#ffffff" ? "is-white-subject-dot" : "") : "is-no-subject-dot";
       const statusKey = task.status === "completed" ? "tasks.completed" : task.status === "progress" ? "tasks.inProgress" : "tasks.toDo";
-      return `<button type="button" class="dashboard-today-task ${task.status === "completed" ? "is-completed" : ""}" data-dashboard-task="${escapeHTML(task.id)}"><span class="subject-dot ${dotClass}" style="background-color:${color}"></span><span class="dashboard-today-copy"><strong>${escapeHTML(task.title)}</strong><small><span class="task-subject-chip ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span> · ${t(statusKey)}</small></span><span class="priority ${escapeHTML(task.priority)}">${t(`tasks.${String(task.priority).toLowerCase()}`)}</span></button>`;
+      const subtaskCount = task.subtasks?.length || 0;
+      const completedSubtasks = task.subtasks?.filter(subtask => subtask.is_completed).length || 0;
+      const progress = subtaskCount ? ` · ${completedSubtasks}/${subtaskCount}` : "";
+      return `<button type="button" class="dashboard-today-task ${task.status === "completed" ? "is-completed" : ""}" data-dashboard-task="${escapeHTML(task.id)}"><span class="subject-dot ${dotClass}" style="background-color:${color}"></span><span class="dashboard-today-copy"><strong>${escapeHTML(task.title)}</strong><small><span class="task-subject-chip ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span> · ${t(statusKey)}${progress}</small></span><span class="priority ${escapeHTML(task.priority)}">${t(`tasks.${String(task.priority).toLowerCase()}`)}</span></button>`;
     }).join("");
     $("#dashboard-today-count").textContent = t("dashboard.taskCount", { count: todayTasks.length });
     $("#dashboard-today-empty").classList.toggle("hidden", todayTasks.length > 0);
@@ -320,7 +326,7 @@ function initializeApp() {
     analyticsModule = initAnalytics({ state });
     archiveModule = initArchive({ state, onTaskRestored: async value => {
       const rows = Array.isArray(value) ? value : [value];
-      rows.forEach(row => tasksModule.applyRow(row, true));
+      await tasksModule.load({ renderAfter: false });
       await renderLoadedViews({ type: "tasks" });
     } });
     profileModule = initProfileSettings({

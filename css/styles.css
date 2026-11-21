@@ -11,6 +11,21 @@
 .task-action.delete:hover{background:#fff5f4}
 .task-right{min-width:94px}
 @media(max-width:420px){.task-row{grid-template-columns:18px minmax(0,1fr) auto;gap:7px}.task-right{min-width:72px}.task-action{padding:4px 5px;font-size:8px}.status-select{max-width:78px}}
+.task-subtask-progress{display:inline-block;margin-left:8px;padding:2px 6px;border-radius:10px;background:#f1efff;color:#7564e8;font-size:9px;text-decoration:none;vertical-align:1px}
+.subtasks-editor{margin-top:14px;padding-top:12px;border-top:1px solid #f0f1f6}
+.subtasks-editor-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.subtasks-editor-heading h3{margin:0;font:700 12px Manrope;color:#626478}
+.task-subtasks-list{display:grid;gap:7px}
+.subtask-editor-row{display:grid;grid-template-columns:18px minmax(0,1fr) 28px 28px 28px;gap:6px;align-items:center}
+.subtask-editor-title{width:100%;height:36px;border:1px solid #e9eaf1;border-radius:7px;padding:0 9px;font:11px "DM Sans";color:#42445a;outline-color:#9a8df0}
+.subtask-check-control{position:relative;width:18px;height:18px}
+.subtask-check-control input{position:absolute;opacity:0}
+.subtask-check-control span{display:grid;place-items:center;width:17px;height:17px;border:1.5px solid #d8d9e4;border-radius:5px;background:#fff}
+.subtask-check-control input:checked+span{border-color:#38b889;background:#38b889}
+.subtask-check-control input:checked+span::after{content:"";width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.subtask-order-button,.subtask-delete-button{width:28px;height:28px;border:1px solid #e9e7f8;border-radius:6px;background:#fff;color:#7564e8;cursor:pointer}
+.subtask-order-button:disabled{opacity:.35;cursor:default}
+.subtask-delete-button{border-color:#f3e2e0;color:#c46b63}
 .sf-auth-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 15% 15%,#eeeaff 0,transparent 42%),#f7f8fc;font-family:"DM Sans",sans-serif;color:#202238}
 .sf-auth-card{width:min(430px,100%);background:#fff;border:1px solid #f0f1f6;border-radius:18px;padding:34px;box-shadow:0 18px 60px rgba(34,38,70,.09)}
 .sf-auth-brand{font:800 23px Manrope,sans-serif;letter-spacing:-1px;color:#25243a;margin-bottom:8px}.sf-auth-brand span{color:#8d8da1;font-weight:500}

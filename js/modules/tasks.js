@@ -1,4 +1,4 @@
-import { createTask, updateTask, updateTaskStatus, archiveTask, archiveTasks, updateTasksStatus, loadTasks } from "../services/tasks.service.js";
+import { updateTaskStatus, archiveTask, archiveTasks, updateTasksStatus, loadTasks, saveTaskWithSubtasks, completeTaskWithSubtasks, completeTasksWithSubtasks } from "../services/tasks.service.js";
 import { resolveTaskSubject } from "../services/subjects.service.js";
 import { $, $$ } from "../utils/dom.js";
 import { enhanceFilterDropdown } from "../utils/filterDropdown.js";
@@ -84,9 +84,18 @@ export function initTasks({ state, onDataChanged, notify }) {
   const form = $("#task-form");
   let editingTaskId = null;
   let busy = false;
+  let editingSubtasks = [];
 
   function mapRow(row) {
     const subject = state.subjects.find(item => String(item.id) === String(row.subject_id));
+    const subtasks = Array.isArray(row.task_subtasks)
+      ? row.task_subtasks.map(subtask => ({
+          id: subtask.id,
+          title: subtask.title,
+          is_completed: Boolean(subtask.is_completed),
+          position: Number(subtask.position) || 0
+        })).sort((a, b) => a.position - b.position)
+      : [];
     return {
       id: row.id,
       title: row.title,
@@ -97,7 +106,8 @@ export function initTasks({ state, onDataChanged, notify }) {
       createdAt: row.created_at,
       priority: normalizePriority(row.priority),
       status: normalizeStatus(row.status),
-      deletedAt: row.deleted_at || null
+      deletedAt: row.deleted_at || null,
+      subtasks
     };
   }
 
@@ -192,10 +202,15 @@ export function initTasks({ state, onDataChanged, notify }) {
       const subjectColor = subject ? validSubjectColor(subject.color) : "#ffffff";
       const whiteSubjectColor = Boolean(subject && subjectColor.toLowerCase() === "#ffffff");
       const statusKey = task.status === "completed" ? "tasks.completed" : task.status === "progress" ? "tasks.inProgress" : "tasks.toDo";
+      const subtaskCount = task.subtasks?.length || 0;
+      const completedSubtasks = task.subtasks?.filter(subtask => subtask.is_completed).length || 0;
+      const subtaskProgress = subtaskCount
+        ? `<span class="task-subtask-progress" aria-label="${escapeHTML(t("tasks.subtaskProgress", { completed: completedSubtasks, total: subtaskCount }))}">${completedSubtasks}/${subtaskCount}</span>`
+        : "";
       return `
       <article class="task-row task-workspace-row ${task.status === "completed" ? "task-completed" : ""} ${hasValidDueDate(task.dueDate) ? "task-has-deadline" : ""}">
         ${selectionCheckbox(task.id, task.title)}
-        <div class="task-main"><button type="button" class="task-title task-open-button" data-open-task="${escapeHTML(task.id)}" aria-label="${escapeHTML(t("tasks.openTask", { title: task.title }))}">${escapeHTML(task.title)}</button>${task.description ? `<span class="task-description-preview">${escapeHTML(task.description)}</span>` : ""}<div class="task-meta"><i class="subject-dot ${subject ? whiteSubjectColor ? "is-white-subject-dot" : "" : "is-no-subject-dot"}" style="background-color:${subjectColor}"></i><span class="task-subject-name ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span><span class="task-meta-divider" aria-hidden="true">·</span><span class="task-due-date">${escapeHTML(hasValidDueDate(task.dueDate) ? formatDue(task.dueDate, getLanguage()) : t("tasks.noDate"))}</span></div></div>
+        <div class="task-main"><button type="button" class="task-title task-open-button" data-open-task="${escapeHTML(task.id)}" aria-label="${escapeHTML(t("tasks.openTask", { title: task.title }))}">${escapeHTML(task.title)}${subtaskProgress}</button>${task.description ? `<span class="task-description-preview">${escapeHTML(task.description)}</span>` : ""}<div class="task-meta"><i class="subject-dot ${subject ? whiteSubjectColor ? "is-white-subject-dot" : "" : "is-no-subject-dot"}" style="background-color:${subjectColor}"></i><span class="task-subject-name ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span><span class="task-meta-divider" aria-hidden="true">·</span><span class="task-due-date">${escapeHTML(hasValidDueDate(task.dueDate) ? formatDue(task.dueDate, getLanguage()) : t("tasks.noDate"))}</span></div></div>
         <div class="task-right"><span class="priority ${escapeHTML(task.priority)}">${t(`tasks.${task.priority.toLowerCase()}`)}</span><select class="status-select status-${escapeHTML(task.status)}" data-status="${escapeHTML(task.id)}" aria-label="${t("tasks.status")}"><option value="todo" ${task.status === "todo" ? "selected" : ""}>${t("tasks.toDo")}</option><option value="progress" ${task.status === "progress" ? "selected" : ""}>${t("tasks.inProgress")}</option><option value="completed" ${task.status === "completed" ? "selected" : ""}>${t("tasks.completed")}</option></select><div class="task-actions"><button type="button" class="task-action" data-edit="${escapeHTML(task.id)}">${taskIcon("edit")}<span>${t("tasks.edit")}</span></button><button type="button" class="task-action delete" data-delete="${escapeHTML(task.id)}">${taskIcon("delete")}<span>${t("tasks.delete")}</span></button></div><span class="task-status-label">${t(statusKey)}</span></div>
       </article>`;
     }).join("");
@@ -347,6 +362,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   function openDialog(task = null, { dueToday = false } = {}) {
     form.reset();
     editingTaskId = task ? task.id : null;
+    editingSubtasks = task?.subtasks?.map(subtask => ({ ...subtask })) || [];
     populateSubjectSelect(task?.subjectId ?? "");
     $("#task-title").setCustomValidity("");
     $("#task-dialog-title").textContent = task ? t("tasks.edit") : t("tasks.add");
@@ -360,13 +376,49 @@ export function initTasks({ state, onDataChanged, notify }) {
       $("#task-date").value = localDateKey();
     }
     $("#task-form [type=submit]").textContent = task ? t("tasks.save") : t("tasks.create");
+    renderSubtaskEditor();
     dialog.showModal();
     if (!task) requestAnimationFrame(() => { if (dialog.open && editingTaskId === null) $("#task-title").focus(); });
   }
 
-  function openTaskById(taskId) {
-    const task = state.tasks.find(item => String(item.id) === String(taskId));
-    if (task) openDialog(task);
+  function renderSubtaskEditor() {
+    const list = $("#task-subtasks-list");
+    if (!list) return;
+    list.innerHTML = editingSubtasks.map((subtask, index) => `
+      <div class="subtask-editor-row" data-subtask-row="${index}">
+        <label class="subtask-check-control" title="${escapeHTML(t("tasks.subtaskComplete"))}">
+          <input type="checkbox" data-subtask-complete="${index}" ${subtask.is_completed ? "checked" : ""}>
+          <span aria-hidden="true"></span>
+        </label>
+        <input class="subtask-editor-title" type="text" maxlength="200" value="${escapeHTML(subtask.title)}" data-subtask-title="${index}" placeholder="${escapeHTML(t("tasks.subtaskPlaceholder"))}" aria-label="${escapeHTML(t("tasks.subtaskTitle"))}">
+        <button type="button" class="subtask-order-button" data-subtask-up="${index}" ${index === 0 ? "disabled" : ""} aria-label="${escapeHTML(t("tasks.subtaskMoveUp"))}">↑</button>
+        <button type="button" class="subtask-order-button" data-subtask-down="${index}" ${index === editingSubtasks.length - 1 ? "disabled" : ""} aria-label="${escapeHTML(t("tasks.subtaskMoveDown"))}">↓</button>
+        <button type="button" class="subtask-delete-button" data-subtask-delete="${index}" aria-label="${escapeHTML(t("tasks.subtaskDelete"))}">×</button>
+      </div>`).join("");
+  }
+
+  async function openTaskById(taskId) {
+    const cachedTask = state.tasks.find(item => String(item.id) === String(taskId));
+    if (!cachedTask || !state.user) {
+      if (cachedTask) openDialog(cachedTask);
+      return;
+    }
+    const userId = state.user.id;
+    try {
+      const rows = await loadTasks(userId);
+      if (state.user?.id !== userId) return;
+      const freshRow = rows.find(row => String(row.id) === String(taskId));
+      if (freshRow) {
+        const freshTask = mapRow(freshRow);
+        const index = state.tasks.findIndex(item => String(item.id) === String(taskId));
+        if (index >= 0) state.tasks[index] = freshTask;
+        openDialog(freshTask);
+        return;
+      }
+      openDialog(cachedTask);
+    } catch (_) {
+      openDialog(cachedTask);
+    }
   }
 
   function refreshLanguage() {
@@ -394,6 +446,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     populateFilters();
     $("#task-dialog-title").textContent = editingTaskId === null ? t("tasks.add") : t("tasks.edit");
     $("#task-form [type=submit]").textContent = editingTaskId === null ? t("tasks.create") : t("tasks.save");
+    renderSubtaskEditor();
     const overdueHeading = overdueView.querySelector(".tasks-workspace-heading");
     overdueHeading.querySelector(".eyebrow").textContent = t("layout.workspace");
     overdueHeading.querySelector("h1").textContent = t("overdue.title");
@@ -426,6 +479,19 @@ export function initTasks({ state, onDataChanged, notify }) {
     submit.disabled = true;
     const editing = editingTaskId !== null;
     try {
+      const normalizedSubtasks = editingSubtasks
+        .map(subtask => ({ ...subtask, title: subtask.title.trim() }))
+      const blankSubtask = normalizedSubtasks.find(subtask => !subtask.title);
+      if (blankSubtask) {
+        notify(t("tasks.subtaskTitleRequired"), true);
+        return;
+      }
+      const taskStatus = normalizeStatus($("#task-status").value);
+      if (taskStatus === "completed") {
+        const unfinished = normalizedSubtasks.filter(subtask => !subtask.is_completed).length;
+        if (unfinished && !window.confirm(t("tasks.completeParentConfirm", { count: unfinished }))) return;
+        if (unfinished) normalizedSubtasks.forEach(subtask => { subtask.is_completed = true; });
+      }
       const subject = await resolveTaskSubject(userId, $("#task-subject").value);
       if (state.user?.id !== userId) return;
       if (subject && !state.subjects.some(item => String(item.id) === String(subject.id))) {
@@ -437,12 +503,15 @@ export function initTasks({ state, onDataChanged, notify }) {
         title,
         description: $("#task-description").value.trim(),
         due_date: $("#task-date").value || null,
-        status: normalizeStatus($("#task-status").value),
+        status: taskStatus,
         priority: normalizePriority($("#task-priority").value)
       };
-      const row = editing
-        ? await updateTask(userId, editingTaskId, task)
-        : await createTask(userId, task);
+      const row = await saveTaskWithSubtasks(
+        userId,
+        editing ? editingTaskId : null,
+        task,
+        normalizedSubtasks
+      );
       if (state.user?.id !== userId) return;
       applyRow(row, !editing);
       if (editing) { taskBulk.deselect([row.id]); overdueBulk.deselect([row.id]); }
@@ -465,11 +534,29 @@ export function initTasks({ state, onDataChanged, notify }) {
   async function changeStatus(id, status, control = null) {
     if (busy || !state.user) return;
     const userId = state.user.id;
+    if (status === "completed") {
+      const task = state.tasks.find(item => String(item.id) === String(id));
+      const unfinished = task?.subtasks?.filter(subtask => !subtask.is_completed).length || 0;
+      if (unfinished && !window.confirm(t("tasks.completeParentConfirm", { count: unfinished }))) {
+        if (control) control.value = normalizeStatus(task?.status || "todo");
+        return;
+      }
+    }
     busy = true;
     if (control) control.disabled = true;
     try {
-      const row = await updateTaskStatus(userId, id, status);
+      const row = status === "completed"
+        ? await completeTaskWithSubtasks(userId, id)
+        : await updateTaskStatus(userId, id, status);
       if (state.user?.id !== userId) return;
+      if (status === "completed") {
+        const task = state.tasks.find(item => String(item.id) === String(id));
+        task?.subtasks?.forEach(subtask => { subtask.is_completed = true; });
+        row.task_subtasks = task?.subtasks || [];
+      } else {
+        const task = state.tasks.find(item => String(item.id) === String(id));
+        row.task_subtasks = task?.subtasks || [];
+      }
       applyRow(row);
       taskBulk.deselect([id]);
       overdueBulk.deselect([id]);
@@ -510,13 +597,36 @@ export function initTasks({ state, onDataChanged, notify }) {
     const ids = selection.selectedIds();
     if (!ids.length) return;
     if (kind === "archive" && !window.confirm(t("bulk.confirmArchive", { count: ids.length }))) return;
+    if (kind === "complete") {
+      const unfinished = ids.reduce((total, id) => {
+        const task = state.tasks.find(item => String(item.id) === String(id));
+        return total + (task?.subtasks?.filter(subtask => !subtask.is_completed).length || 0);
+      }, 0);
+      if (!window.confirm(unfinished
+        ? t("tasks.completeParentsConfirm", { count: unfinished })
+        : t("tasks.completeParentsConfirmEmpty", { count: ids.length }))) return;
+    }
     const userId = state.user.id;
     busy = true;
     selection.setBusy(true);
     try {
       if (kind === "complete" || kind === "returnActive") {
-        const rows = await updateTasksStatus(userId, ids, kind === "complete" ? "completed" : "todo");
+        const rows = kind === "complete"
+          ? await completeTasksWithSubtasks(userId, ids)
+          : await updateTasksStatus(userId, ids, "todo");
         if (state.user?.id !== userId) return;
+        if (kind === "complete") {
+          ids.forEach(id => {
+            const task = state.tasks.find(item => String(item.id) === String(id));
+            task?.subtasks?.forEach(subtask => { subtask.is_completed = true; });
+          });
+        }
+        rows.forEach(row => {
+          if (!row.task_subtasks) {
+            const task = state.tasks.find(item => String(item.id) === String(row.id));
+            row.task_subtasks = task?.subtasks || [];
+          }
+        });
         rows.forEach(row => applyRow(row));
         const failed = ids.length - rows.length;
         await onDataChanged({ type: "tasks" });
@@ -554,6 +664,38 @@ export function initTasks({ state, onDataChanged, notify }) {
   $("#tasks-add-task", view).addEventListener("click", () => openDialog());
   $("#close-task-dialog").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
   $("#cancel-task").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
+  $("#add-subtask").addEventListener("click", () => {
+    editingSubtasks.push({ id: null, title: "", is_completed: false, position: editingSubtasks.length });
+    renderSubtaskEditor();
+    const last = $("#task-subtasks-list").querySelector('[data-subtask-title="' + (editingSubtasks.length - 1) + '"]');
+    last?.focus();
+  });
+  $("#task-subtasks-list").addEventListener("input", event => {
+    const title = event.target.closest("[data-subtask-title]");
+    if (title) editingSubtasks[Number(title.dataset.subtaskTitle)].title = title.value;
+  });
+  $("#task-subtasks-list").addEventListener("change", event => {
+    const complete = event.target.closest("[data-subtask-complete]");
+    if (complete) editingSubtasks[Number(complete.dataset.subtaskComplete)].is_completed = complete.checked;
+  });
+  $("#task-subtasks-list").addEventListener("click", event => {
+    const remove = event.target.closest("[data-subtask-delete]");
+    if (remove) {
+      editingSubtasks.splice(Number(remove.dataset.subtaskDelete), 1);
+      renderSubtaskEditor();
+      return;
+    }
+    const up = event.target.closest("[data-subtask-up]");
+    const down = event.target.closest("[data-subtask-down]");
+    if (up || down) {
+      const index = Number(up ? up.dataset.subtaskUp : down.dataset.subtaskDown);
+      const swap = up ? index - 1 : index + 1;
+      if (swap >= 0 && swap < editingSubtasks.length) {
+        [editingSubtasks[index], editingSubtasks[swap]] = [editingSubtasks[swap], editingSubtasks[index]];
+        renderSubtaskEditor();
+      }
+    }
+  });
   form.addEventListener("input", event => { if (event.target.id === "task-title") event.target.setCustomValidity(""); });
   form.addEventListener("submit", save);
   function handleTaskListClick(event) {
@@ -564,8 +706,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     }
     const edit = event.target.closest("[data-edit]");
     if (edit) {
-      const task = state.tasks.find(item => String(item.id) === edit.dataset.edit);
-      if (task) openDialog(task);
+      openTaskById(edit.dataset.edit);
       return;
     }
     const removeButton = event.target.closest("[data-delete]");

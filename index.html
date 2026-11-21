@@ -169,6 +169,10 @@
         <label class="field-label"><span data-i18n="tasks.priority">Priority</span><select id="task-priority"><option value="Medium" data-i18n="tasks.medium">Medium</option><option value="High" data-i18n="tasks.high">High</option><option value="Low" data-i18n="tasks.low">Low</option></select></label>
       </div>
       <label class="field-label"><span data-i18n="tasks.status">Status</span><select id="task-status"><option value="todo" data-i18n="tasks.toDo">To do</option><option value="progress" data-i18n="tasks.inProgress">In progress</option><option value="completed" data-i18n="tasks.completed">Completed</option></select></label>
+      <section class="subtasks-editor" aria-labelledby="task-subtasks-heading">
+        <div class="subtasks-editor-heading"><h3 id="task-subtasks-heading" data-i18n="tasks.subtasks">Subtasks</h3><button type="button" class="secondary-button" id="add-subtask" data-i18n="tasks.subtaskAdd">Add subtask</button></div>
+        <div id="task-subtasks-list" class="task-subtasks-list"></div>
+      </section>
       <div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-task" data-i18n="tasks.cancel">Cancel</button><button type="submit" class="primary-button" data-i18n="tasks.create">Create task</button></div>
     </form>
   </dialog>
