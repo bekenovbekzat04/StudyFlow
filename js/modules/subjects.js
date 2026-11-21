@@ -154,6 +154,7 @@ export function initSubjects({ state, onDataChanged }) {
     syncColorPicker();
     closeColorPicker();
     dialog.showModal();
+    if (!subject) requestAnimationFrame(() => { if (dialog.open && editingId === null) $("#subject-name", dialog).focus(); });
   }
 
   async function submit(event) {

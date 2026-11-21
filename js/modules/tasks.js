@@ -21,6 +21,13 @@ function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+function hasValidDueDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
 export function getOverdueTasks(tasks, today = localDateKey()) {
   return tasks.filter(task =>
     task.deletedAt == null && task.status !== "completed" &&
@@ -150,10 +157,14 @@ export function initTasks({ state, onDataChanged, notify }) {
     return tasks.map((task, index) => ({ task, index })).sort((a, b) => {
       let comparison = 0;
       if (taskSortOrder === "due-earliest" || taskSortOrder === "due-latest") {
-        const aHasDate = Boolean(a.task.dueDate);
-        const bHasDate = Boolean(b.task.dueDate);
+        const aHasDate = hasValidDueDate(a.task.dueDate);
+        const bHasDate = hasValidDueDate(b.task.dueDate);
         if (aHasDate !== bHasDate) return aHasDate ? -1 : 1;
         if (aHasDate) comparison = String(a.task.dueDate).localeCompare(String(b.task.dueDate)) * dueOrder;
+        if (comparison === 0 && aHasDate) {
+          const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+          comparison = priorityOrder[a.task.priority] - priorityOrder[b.task.priority];
+        }
       } else {
         const aCreated = Date.parse(a.task.createdAt || "") || 0;
         const bCreated = Date.parse(b.task.createdAt || "") || 0;
@@ -182,9 +193,9 @@ export function initTasks({ state, onDataChanged, notify }) {
       const whiteSubjectColor = Boolean(subject && subjectColor.toLowerCase() === "#ffffff");
       const statusKey = task.status === "completed" ? "tasks.completed" : task.status === "progress" ? "tasks.inProgress" : "tasks.toDo";
       return `
-      <article class="task-row task-workspace-row ${task.status === "completed" ? "task-completed" : ""} ${task.dueDate ? "task-has-deadline" : ""}">
+      <article class="task-row task-workspace-row ${task.status === "completed" ? "task-completed" : ""} ${hasValidDueDate(task.dueDate) ? "task-has-deadline" : ""}">
         ${selectionCheckbox(task.id, task.title)}
-        <div class="task-main"><button type="button" class="task-title task-open-button" data-open-task="${escapeHTML(task.id)}" aria-label="${escapeHTML(t("tasks.openTask", { title: task.title }))}">${escapeHTML(task.title)}</button>${task.description ? `<span class="task-description-preview">${escapeHTML(task.description)}</span>` : ""}<div class="task-meta"><i class="subject-dot ${subject ? whiteSubjectColor ? "is-white-subject-dot" : "" : "is-no-subject-dot"}" style="background-color:${subjectColor}"></i><span class="task-subject-name ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span><span class="task-meta-divider" aria-hidden="true">·</span><span class="task-due-date">${escapeHTML(task.dueDate ? formatDue(task.dueDate, getLanguage()) : t("tasks.noDate"))}</span></div></div>
+        <div class="task-main"><button type="button" class="task-title task-open-button" data-open-task="${escapeHTML(task.id)}" aria-label="${escapeHTML(t("tasks.openTask", { title: task.title }))}">${escapeHTML(task.title)}</button>${task.description ? `<span class="task-description-preview">${escapeHTML(task.description)}</span>` : ""}<div class="task-meta"><i class="subject-dot ${subject ? whiteSubjectColor ? "is-white-subject-dot" : "" : "is-no-subject-dot"}" style="background-color:${subjectColor}"></i><span class="task-subject-name ${subject ? "" : "task-no-subject"}">${escapeHTML(subject?.name || t("tasks.noSubject"))}</span><span class="task-meta-divider" aria-hidden="true">·</span><span class="task-due-date">${escapeHTML(hasValidDueDate(task.dueDate) ? formatDue(task.dueDate, getLanguage()) : t("tasks.noDate"))}</span></div></div>
         <div class="task-right"><span class="priority ${escapeHTML(task.priority)}">${t(`tasks.${task.priority.toLowerCase()}`)}</span><select class="status-select status-${escapeHTML(task.status)}" data-status="${escapeHTML(task.id)}" aria-label="${t("tasks.status")}"><option value="todo" ${task.status === "todo" ? "selected" : ""}>${t("tasks.toDo")}</option><option value="progress" ${task.status === "progress" ? "selected" : ""}>${t("tasks.inProgress")}</option><option value="completed" ${task.status === "completed" ? "selected" : ""}>${t("tasks.completed")}</option></select><div class="task-actions"><button type="button" class="task-action" data-edit="${escapeHTML(task.id)}">${taskIcon("edit")}<span>${t("tasks.edit")}</span></button><button type="button" class="task-action delete" data-delete="${escapeHTML(task.id)}">${taskIcon("delete")}<span>${t("tasks.delete")}</span></button></div><span class="task-status-label">${t(statusKey)}</span></div>
       </article>`;
     }).join("");
@@ -350,6 +361,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     }
     $("#task-form [type=submit]").textContent = task ? t("tasks.save") : t("tasks.create");
     dialog.showModal();
+    if (!task) requestAnimationFrame(() => { if (dialog.open && editingTaskId === null) $("#task-title").focus(); });
   }
 
   function openTaskById(taskId) {

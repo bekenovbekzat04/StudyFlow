@@ -722,3 +722,4 @@ button:disabled,.primary-button:disabled,.secondary-button:disabled{opacity:.55;
 }
 @media(max-width:650px){.tasks-workspace:not(.overdue-workspace) .tasks-workspace-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:390px){.tasks-workspace:not(.overdue-workspace) .tasks-workspace-toolbar{grid-template-columns:minmax(0,1fr)}}
+.brand-mark{align-items:center;justify-content:center;color:#fff}.brand-mark svg{display:block;flex:0 0 auto}
