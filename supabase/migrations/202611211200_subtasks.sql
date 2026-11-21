@@ -57,6 +57,7 @@ create policy task_subtasks_owner_insert_20261121 on public.task_subtasks
       select 1 from public.tasks task
       where task.id = task_subtasks.task_id
         and task.user_id = auth.uid()
+        and task.deleted_at is null
     )
   );
 
@@ -69,6 +70,7 @@ create policy task_subtasks_owner_update_20261121 on public.task_subtasks
       select 1 from public.tasks task
       where task.id = task_subtasks.task_id
         and task.user_id = auth.uid()
+        and task.deleted_at is null
     )
   )
   with check (
@@ -77,6 +79,7 @@ create policy task_subtasks_owner_update_20261121 on public.task_subtasks
       select 1 from public.tasks task
       where task.id = task_subtasks.task_id
         and task.user_id = auth.uid()
+        and task.deleted_at is null
     )
   );
 
@@ -89,6 +92,7 @@ create policy task_subtasks_owner_delete_20261121 on public.task_subtasks
       select 1 from public.tasks task
       where task.id = task_subtasks.task_id
         and task.user_id = auth.uid()
+        and task.deleted_at is null
     )
   );
 
