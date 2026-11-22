@@ -1,0 +1,96 @@
+/* Shared StudyFlow refinement layer */
+:root{
+  --bg:#f6f7fb;
+  --surface:#fff;
+  --surface-raised:#fff;
+  --surface-soft:#f8f8fc;
+  --text:#25263a;
+  --text-secondary:#55586e;
+  --muted:#74778c;
+  --line:#e9eaf1;
+  --purple:#7564e8;
+  --purple-strong:#6554d4;
+  --purple-soft:#f2f0ff;
+  --lavender:#e8e4ff;
+  --green:#2e9c73;
+  --green-soft:#edf8f2;
+  --orange:#c98635;
+  --orange-soft:#fff7eb;
+  --blue:#518bd4;
+  --blue-soft:#eef5ff;
+  --danger:#bd665d;
+  --danger-soft:#fff3f0;
+  --info:#5a7fc1;
+  --info-soft:#f0f5ff;
+  --radius-sm:7px;
+  --radius-dialog:18px;
+  --shadow:0 3px 14px rgba(34,38,70,.035);
+  --shadow-raised:0 10px 32px rgba(38,35,76,.09),0 2px 8px rgba(38,35,76,.04);
+  --shadow-dialog:0 24px 72px rgba(34,32,68,.19);
+  --radius-card:14px;
+  --radius-control:9px;
+  --space-card:clamp(16px,1.6vw,22px);
+}
+body{font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}
+button{line-height:1.35}
+:where(button,input,select,textarea,a,[tabindex]):focus-visible{outline:2px solid #9789ef;outline-offset:2px}
+button:focus-visible,a:focus-visible,select:focus-visible,.search-box:focus-within,.subjects-search-field:focus-within,.tasks-search-field:focus-within{outline:2px solid #9789ef;outline-offset:2px}
+.sidebar{background:#fff;border-color:var(--line)}
+.brand{font-size:20px}
+.workspace-label{font-size:10px;letter-spacing:1.15px;color:#8c8fa3}
+.nav-item{min-height:42px;border-radius:10px;color:#686b80;font-size:13px;transition:background-color .16s,color .16s}
+.nav-item:hover{background:#f7f6fc;color:#6655d5}
+.nav-item.active{background:var(--purple-soft);color:#6555d3}
+.nav-icon{width:20px;flex:0 0 20px;font-size:17px}
+.topbar{border-color:var(--line)}
+.breadcrumb,.topbar-actions{min-width:0}
+.page-content{padding-block:clamp(24px,3vw,38px) 24px}
+.welcome-row h1,.subjects-toolbar h1,.calendar-toolbar h1,.tasks-workspace-heading h1{font-size:clamp(22px,2vw,28px);line-height:1.2;letter-spacing:-.65px}
+.eyebrow{font-size:10px;letter-spacing:1px;line-height:1.4;color:#777a90}
+.page-subtitle,.subjects-toolbar p,.calendar-toolbar p{font-size:13px;line-height:1.5;color:#777a8d}
+.stat-card,.analytics-stat-card,.panel,.subject-card,.calendar-panel,.analytics-card,.tasks-workspace-list-panel,.focus-timer-card,.focus-task-card,.archive-task-card,.subjects-empty,.subjects-loading{border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+.stat-card{padding:18px;min-width:0}
+.stat-number{font-size:26px;line-height:1.2}
+.stat-label{font-size:12px;line-height:1.4}
+.stat-foot{font-size:11px;line-height:1.4;color:#777a8d}
+.panel{padding:var(--space-card);min-width:0}
+.panel-heading{gap:12px;min-width:0}
+.panel-heading>div{min-width:0}
+.panel-heading h2,.analytics-card-heading h2,.tasks-result-heading h2{font-size:15px;line-height:1.35;letter-spacing:-.15px;overflow-wrap:anywhere}
+.panel-heading p{font-size:11px;line-height:1.45;color:#777a8d}
+.primary-button,.sf-auth-submit{background:#705fe0;border-radius:var(--radius-control);font-size:12px;min-height:42px;box-shadow:none;transition:background-color .16s,box-shadow .16s,transform .16s}
+.primary-button:hover,.sf-auth-submit:hover:not(:disabled){background:#6252cf;box-shadow:0 4px 12px #6958d526;transform:translateY(-1px)}
+.primary-button:active,.secondary-button:active,.nav-item:active{transform:translateY(0)}
+.secondary-button{min-height:40px;border-color:#dedfeb;border-radius:var(--radius-control);color:#55586e;font-size:12px}
+.secondary-button:hover{background:#f8f8fb}
+.text-button,.more-button{min-height:36px;border-radius:7px}
+.text-button:hover,.more-button:hover{background:#f7f6fc}
+.icon-button,.close-button,.sidebar-toggle{min-width:36px;min-height:36px;border-radius:8px}
+.close-button{display:grid;place-items:center;width:36px;height:36px}
+.field-label,.sf-auth-form label{font-size:12px;line-height:1.4;color:#55586d}
+.field-label input,.field-label select,.field-label textarea,.sf-auth-form input,.calendar-filters select,.tasks-filter-field select{border-color:#dfe1eb;border-radius:var(--radius-control);font-size:13px}
+.field-label input,.field-label select,.sf-auth-form input,.calendar-filters select,.tasks-filter-field select{min-height:42px}
+.field-label input:focus,.field-label select:focus,.field-label textarea:focus,.sf-auth-form input:focus{border-color:#9a8df0;outline:3px solid #9789ef24}
+.field-label textarea{font-size:13px}
+.task-dialog,.subject-dialog,.calendar-more-dialog,.profile-dialog{max-width:calc(100vw - 24px);max-height:min(88vh,760px);overflow:auto;border-radius:16px}
+.task-dialog form,.subject-dialog form{padding:clamp(18px,4vw,28px)}
+.dialog-heading{gap:14px;margin-bottom:20px}
+.dialog-heading h2{font-size:21px;line-height:1.25}
+.empty-state,.subjects-empty,.subjects-loading,.calendar-empty{color:#74778c;line-height:1.55}
+.empty-state{padding:clamp(24px,4vw,40px) 14px}
+.toast-region{right:clamp(14px,2vw,24px);bottom:clamp(14px,2vw,24px)}
+.studyflow-toast{border-radius:11px;box-shadow:0 8px 24px #25213b16;font-size:13px}
+.progress-content{justify-content:center;gap:clamp(24px,4vw,48px);padding:24px 4px 10px}
+.progress-panel{display:flex;flex-direction:column;min-height:0}
+.progress-panel .progress-content{flex:1 1 auto;min-height:0}
+.donut{flex:0 0 auto}
+.progress-legend{min-width:0;gap:12px}
+.progress-legend>div{grid-template-columns:8px minmax(0,1fr) auto;gap:8px;font-size:11px;line-height:1.35}
+.progress-legend b{font-size:11px}
+.profile-copy strong{font-size:12px}.profile-copy small{font-size:11px}
+.calendar-weekday{font-size:10px}.calendar-day-number{font-size:11px}.calendar-task{font-size:11px;line-height:1.35}.calendar-notice{font-size:12px;line-height:1.5}
+.analytics-stat-label{font-size:11px}.analytics-stat-card small,.analytics-subject-info span,.analytics-deadline small{font-size:10px}.analytics-card-heading p{font-size:11px}.analytics-subject-info strong,.analytics-deadline span{font-size:11px}
+.focus-status{font-size:12px}.focus-task-card>p{font-size:13px}.focus-selected-task strong{font-size:12px}.focus-selected-task small{font-size:10px}
+.subject-task-count{font-size:12px}.subject-card-actions button{font-size:11px}
+.archive-heading p,.archive-task-subject,.archive-task-meta{font-size:12px}.archive-task-copy h2{font-size:15px}

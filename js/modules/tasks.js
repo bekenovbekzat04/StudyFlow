@@ -59,6 +59,13 @@ export function initTasks({ state, onDataChanged, notify }) {
   const overdueResultCount = $("#overdue-result-count", overdueView);
   const taskBulkControls = mountBulkSelectionControls($(".tasks-result-heading", view));
   const overdueBulkControls = mountBulkSelectionControls($(".tasks-result-heading", overdueView));
+  function setTaskBulkLabels() {
+    taskBulkControls.toolbar.querySelector("[data-bulk-archive]").textContent = t("tasks.delete");
+    taskBulkControls.toolbar.querySelector("[data-bulk-clear]").textContent = t("tasks.cancel");
+    overdueBulkControls.toolbar.querySelector("[data-bulk-archive]").textContent = t("tasks.delete");
+    overdueBulkControls.toolbar.querySelector("[data-bulk-clear]").textContent = t("tasks.cancel");
+  }
+  setTaskBulkLabels();
   const taskBulk = createBulkSelection({ root: view, list, ...taskBulkControls });
   const overdueBulk = createBulkSelection({ root: overdueView, list: overdueList, ...overdueBulkControls });
   const subjectDropdown = enhanceFilterDropdown($("#task-subject-filter", view), {
@@ -85,6 +92,15 @@ export function initTasks({ state, onDataChanged, notify }) {
   let editingTaskId = null;
   let busy = false;
   let editingSubtasks = [];
+  let detailsTaskId = null;
+  let detailsScrollTop = 0;
+  let detailsListScrollTop = 0;
+  let detailsBusy = false;
+  const detailsPanel = document.createElement("dialog");
+  detailsPanel.id = "task-details-panel";
+  detailsPanel.className = "task-details-panel";
+  detailsPanel.innerHTML = `<div class="task-details-backdrop-content"><div class="task-details-heading"><div><span class="eyebrow">${t("layout.workspace")}</span><h2 id="task-details-title"></h2></div><button type="button" class="close-button" id="close-task-details" aria-label="${escapeHTML(t("layout.close"))}">×</button></div><div class="task-details-meta" id="task-details-meta"></div><section class="task-details-description"><h3>${t("tasks.description")}</h3><p id="task-details-description"></p></section><section class="task-details-subtasks"><div class="task-details-subtasks-heading"><h3>${t("tasks.subtasks")}</h3><span id="task-details-subtask-progress"></span></div><div id="task-details-subtask-list" class="task-details-subtask-list"></div><div class="task-details-add-subtask"><input id="task-details-new-subtask" type="text" maxlength="200" placeholder="${escapeHTML(t("tasks.subtaskPlaceholder"))}" aria-label="${escapeHTML(t("tasks.subtaskTitle"))}"><button type="button" class="secondary-button" id="task-details-add-subtask">${t("tasks.subtaskAdd")}</button></div></section><div class="task-details-actions"><button type="button" class="secondary-button" id="task-details-edit">${t("tasks.edit")}</button></div></div>`;
+  document.body.append(detailsPanel);
 
   function mapRow(row) {
     const subject = state.subjects.find(item => String(item.id) === String(row.subject_id));
@@ -381,6 +397,104 @@ export function initTasks({ state, onDataChanged, notify }) {
     if (!task) requestAnimationFrame(() => { if (dialog.open && editingTaskId === null) $("#task-title").focus(); });
   }
 
+  function restoreDetailsScroll() {
+    pageContent.scrollTop = detailsScrollTop;
+    const activeList = detailsTaskId
+      ? (view.classList.contains("hidden") ? overdueList : list)
+      : null;
+    if (activeList) activeList.scrollTop = detailsListScrollTop;
+    requestAnimationFrame(() => {
+      pageContent.scrollTop = detailsScrollTop;
+      if (activeList) activeList.scrollTop = detailsListScrollTop;
+    });
+  }
+
+  function renderDetailsPanel(task) {
+    if (!task) return;
+    detailsTaskId = task.id;
+    $("#task-details-title").textContent = task.title;
+    const subject = state.subjects.find(item => String(item.id) === String(task.subjectId));
+    const statusLabel = task.status === "completed" ? t("tasks.completed") : task.status === "progress" ? t("tasks.inProgress") : t("tasks.toDo");
+    $("#task-details-meta").innerHTML = [
+      escapeHTML(subject?.name || t("tasks.noSubject")),
+      escapeHTML(hasValidDueDate(task.dueDate) ? formatDue(task.dueDate, getLanguage()) : t("tasks.noDate")),
+      escapeHTML(t(`tasks.${task.priority.toLowerCase()}`)),
+      escapeHTML(statusLabel)
+    ].join(" · ");
+    $("#task-details-description").textContent = task.description || "";
+    const subtasks = task.subtasks || [];
+    const completed = subtasks.filter(subtask => subtask.is_completed).length;
+    $("#task-details-subtask-progress").textContent = subtasks.length
+      ? t("tasks.subtaskProgress", { completed, total: subtasks.length })
+      : "";
+    $("#task-details-subtask-list").innerHTML = subtasks.map((subtask, index) => `
+      <div class="task-details-subtask-row">
+        <label class="subtask-check-control" title="${escapeHTML(t("tasks.subtaskComplete"))}">
+          <input type="checkbox" data-details-subtask-complete="${index}" ${subtask.is_completed ? "checked" : ""}>
+          <span aria-hidden="true"></span>
+        </label>
+        <input type="text" class="task-details-subtask-title" maxlength="200" value="${escapeHTML(subtask.title)}" data-details-subtask-title="${index}" placeholder="${escapeHTML(t("tasks.subtaskPlaceholder"))}" aria-label="${escapeHTML(t("tasks.subtaskTitle"))}">
+        <button type="button" class="subtask-order-button" data-details-subtask-up="${index}" ${index === 0 ? "disabled" : ""} aria-label="${escapeHTML(t("tasks.subtaskMoveUp"))}">↑</button>
+        <button type="button" class="subtask-order-button" data-details-subtask-down="${index}" ${index === subtasks.length - 1 ? "disabled" : ""} aria-label="${escapeHTML(t("tasks.subtaskMoveDown"))}">↓</button>
+        <button type="button" class="subtask-delete-button" data-details-subtask-delete="${index}" aria-label="${escapeHTML(t("tasks.subtaskDelete"))}">×</button>
+      </div>`).join("");
+  }
+
+  function openDetailsPanel(task) {
+    detailsScrollTop = pageContent.scrollTop;
+    const activeList = view.classList.contains("hidden") ? overdueList : list;
+    detailsListScrollTop = activeList?.scrollTop || 0;
+    renderDetailsPanel(task);
+    if (!detailsPanel.open) detailsPanel.showModal();
+    requestAnimationFrame(() => {
+      pageContent.scrollTop = detailsScrollTop;
+      if (activeList) activeList.scrollTop = detailsListScrollTop;
+    });
+  }
+
+  function closeDetailsPanel() {
+    if (detailsPanel.open) detailsPanel.close();
+  }
+
+  async function saveDetailsSubtasks(nextSubtasks) {
+    if (detailsBusy || !state.user) return;
+    const task = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    if (!task) return;
+    const normalized = nextSubtasks.map((subtask, position) => ({
+      ...subtask,
+      title: subtask.title.trim(),
+      position
+    }));
+    if (normalized.some(subtask => !subtask.title)) {
+      notify(t("tasks.subtaskTitleRequired"), true);
+      renderDetailsPanel(task);
+      return;
+    }
+    const userId = state.user.id;
+    detailsBusy = true;
+    try {
+      const row = await saveTaskWithSubtasks(userId, task.id, {
+        subject_id: task.subjectId,
+        title: task.title,
+        description: task.description,
+        due_date: task.dueDate,
+        status: task.status,
+        priority: task.priority
+      }, normalized);
+      if (state.user?.id !== userId) return;
+      applyRow(row);
+      render();
+      renderOverdue();
+      const updated = state.tasks.find(item => String(item.id) === String(task.id));
+      renderDetailsPanel(updated || task);
+      notify(t("tasks.updateSuccess"));
+    } catch (error) {
+      if (state.user?.id === userId) notify(t("tasks.updateError", { error: getErrorMessage(error) }), true);
+    } finally {
+      detailsBusy = false;
+    }
+  }
+
   function renderSubtaskEditor() {
     const list = $("#task-subtasks-list");
     if (!list) return;
@@ -400,7 +514,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   async function openTaskById(taskId) {
     const cachedTask = state.tasks.find(item => String(item.id) === String(taskId));
     if (!cachedTask || !state.user) {
-      if (cachedTask) openDialog(cachedTask);
+      if (cachedTask) openDetailsPanel(cachedTask);
       return;
     }
     const userId = state.user.id;
@@ -412,18 +526,19 @@ export function initTasks({ state, onDataChanged, notify }) {
         const freshTask = mapRow(freshRow);
         const index = state.tasks.findIndex(item => String(item.id) === String(taskId));
         if (index >= 0) state.tasks[index] = freshTask;
-        openDialog(freshTask);
+        openDetailsPanel(freshTask);
         return;
       }
-      openDialog(cachedTask);
+      openDetailsPanel(cachedTask);
     } catch (_) {
-      openDialog(cachedTask);
+      openDetailsPanel(cachedTask);
     }
   }
 
   function refreshLanguage() {
     taskBulkControls.refresh();
     overdueBulkControls.refresh();
+    setTaskBulkLabels();
     const heading = view.querySelector(".tasks-workspace-heading");
     heading.querySelector(".eyebrow").textContent = t("layout.workspace");
     heading.querySelector("h1").textContent = t("tasks.workspaceTitle");
@@ -458,6 +573,15 @@ export function initTasks({ state, onDataChanged, notify }) {
     overdueSubjectFilter.setAttribute("aria-label", t("tasks.subjectFilter"));
     overduePriorityFilter.setAttribute("aria-label", t("tasks.priorityFilter"));
     overdueView.querySelector(".tasks-result-heading h2").textContent = t("overdue.listTitle");
+    $("#close-task-details").setAttribute("aria-label", t("layout.close"));
+    detailsPanel.querySelector(".task-details-description h3").textContent = t("tasks.description");
+    detailsPanel.querySelector(".task-details-subtasks-heading h3").textContent = t("tasks.subtasks");
+    $("#task-details-new-subtask").placeholder = t("tasks.subtaskPlaceholder");
+    $("#task-details-new-subtask").setAttribute("aria-label", t("tasks.subtaskTitle"));
+    $("#task-details-add-subtask").textContent = t("tasks.subtaskAdd");
+    $("#task-details-edit").textContent = t("tasks.edit");
+    const detailsTask = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    if (detailsTask) renderDetailsPanel(detailsTask);
     render();
     if (!topbarSearch.classList.contains("hidden")) renderSearchResults(globalSearch.value);
   }
@@ -664,6 +788,80 @@ export function initTasks({ state, onDataChanged, notify }) {
   $("#tasks-add-task", view).addEventListener("click", () => openDialog());
   $("#close-task-dialog").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
   $("#cancel-task").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
+  $("#close-task-details").addEventListener("click", closeDetailsPanel);
+  detailsPanel.addEventListener("cancel", event => {
+    event.preventDefault();
+    closeDetailsPanel();
+  });
+  detailsPanel.addEventListener("close", () => {
+    restoreDetailsScroll();
+  });
+  detailsPanel.addEventListener("click", event => {
+    if (event.target === detailsPanel) closeDetailsPanel();
+  });
+  $("#task-details-edit").addEventListener("click", () => {
+    const task = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    if (!task) return;
+    closeDetailsPanel();
+    openDialog(task);
+  });
+  $("#task-details-add-subtask").addEventListener("click", () => {
+    const task = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    const input = $("#task-details-new-subtask");
+    const title = input.value.trim();
+    if (!task) return;
+    if (!title) {
+      notify(t("tasks.subtaskTitleRequired"), true);
+      input.focus();
+      return;
+    }
+    saveDetailsSubtasks([...(task.subtasks || []), { id: null, title, is_completed: false, position: (task.subtasks || []).length }]);
+    input.value = "";
+  });
+  $("#task-details-new-subtask").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      $("#task-details-add-subtask").click();
+    }
+  });
+  $("#task-details-subtask-list").addEventListener("change", event => {
+    const task = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    if (!task) return;
+    const complete = event.target.closest("[data-details-subtask-complete]");
+    if (complete) {
+      const subtasks = (task.subtasks || []).map(subtask => ({ ...subtask }));
+      subtasks[Number(complete.dataset.detailsSubtaskComplete)].is_completed = complete.checked;
+      saveDetailsSubtasks(subtasks);
+      return;
+    }
+    const title = event.target.closest("[data-details-subtask-title]");
+    if (title) {
+      const subtasks = (task.subtasks || []).map(subtask => ({ ...subtask }));
+      subtasks[Number(title.dataset.detailsSubtaskTitle)].title = title.value;
+      saveDetailsSubtasks(subtasks);
+    }
+  });
+  $("#task-details-subtask-list").addEventListener("click", event => {
+    const task = state.tasks.find(item => String(item.id) === String(detailsTaskId));
+    if (!task) return;
+    const subtasks = (task.subtasks || []).map(subtask => ({ ...subtask }));
+    const remove = event.target.closest("[data-details-subtask-delete]");
+    if (remove) {
+      subtasks.splice(Number(remove.dataset.detailsSubtaskDelete), 1);
+      saveDetailsSubtasks(subtasks);
+      return;
+    }
+    const up = event.target.closest("[data-details-subtask-up]");
+    const down = event.target.closest("[data-details-subtask-down]");
+    if (up || down) {
+      const index = Number(up ? up.dataset.detailsSubtaskUp : down.dataset.detailsSubtaskDown);
+      const swap = up ? index - 1 : index + 1;
+      if (swap >= 0 && swap < subtasks.length) {
+        [subtasks[index], subtasks[swap]] = [subtasks[swap], subtasks[index]];
+        saveDetailsSubtasks(subtasks);
+      }
+    }
+  });
   $("#add-subtask").addEventListener("click", () => {
     editingSubtasks.push({ id: null, title: "", is_completed: false, position: editingSubtasks.length });
     renderSubtaskEditor();
@@ -699,18 +897,31 @@ export function initTasks({ state, onDataChanged, notify }) {
   form.addEventListener("input", event => { if (event.target.id === "task-title") event.target.setCustomValidity(""); });
   form.addEventListener("submit", save);
   function handleTaskListClick(event) {
+    const edit = event.target.closest("[data-edit]");
+    if (edit) {
+      const task = state.tasks.find(item => String(item.id) === String(edit.dataset.edit));
+      if (task) openDialog(task);
+      return;
+    }
+    const removeButton = event.target.closest("[data-delete]");
+    if (removeButton) {
+      remove(removeButton.dataset.delete);
+      return;
+    }
+    if (event.target.closest("[data-bulk-select], [data-status], [data-bulk-clear], [data-bulk-complete], [data-bulk-archive]")) return;
+    const row = event.target.closest(".task-row");
+    if (row) {
+      const openButton = row.querySelector("[data-open-task]");
+      if (openButton) {
+        openTaskById(openButton.dataset.openTask);
+        return;
+      }
+    }
     const open = event.target.closest("[data-open-task]");
     if (open) {
       openTaskById(open.dataset.openTask);
       return;
     }
-    const edit = event.target.closest("[data-edit]");
-    if (edit) {
-      openTaskById(edit.dataset.edit);
-      return;
-    }
-    const removeButton = event.target.closest("[data-delete]");
-    if (removeButton) remove(removeButton.dataset.delete);
   }
   function handleTaskListChange(event) {
     const select = event.target.closest("[data-status]");

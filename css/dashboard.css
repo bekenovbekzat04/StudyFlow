@@ -1,0 +1,142 @@
+/* A bounded Dashboard grid reserves enough room for the week agenda and progress card. */
+.content-grid{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-rows:minmax(320px,1.15fr) minmax(190px,1fr);height:clamp(527px,56vh,680px);align-items:stretch;gap:17px}
+.right-column{display:contents}
+.dashboard-today-panel{grid-column:1;grid-row:1 / span 2;height:auto;min-height:0;max-height:none;overflow:hidden}
+.dashboard-today-list{display:grid;flex:1 1 0%;height:0;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#d9d6eb transparent;scrollbar-gutter:stable;grid-auto-rows:78px;align-content:start}
+.dashboard-today-task{box-sizing:border-box;height:78px;min-height:78px;max-height:78px;min-width:0;overflow:hidden;padding:0 10px;border:1px solid transparent;border-bottom-color:#f1f1f6;border-radius:9px}
+.dashboard-today-task:hover,.dashboard-today-task:focus-visible{background:#faf9ff;border-color:#efedfa;outline:none}
+.dashboard-today-task:focus-visible{box-shadow:0 0 0 2px #8c7bea55}
+.dashboard-today-copy{overflow:hidden}
+.dashboard-today-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-today-panel>.empty-state:not(.hidden){display:grid;flex:1 1 auto;min-height:0;place-items:center}
+.right-column>.week-panel{grid-column:2;grid-row:1;height:auto;min-height:320px;max-height:none}
+.right-column>.progress-panel{grid-column:2;grid-row:2;min-height:190px}
+.week-panel>.week-days{margin-block:14px 10px}
+.week-panel>.dashboard-deadlines-list{min-height:0}
+.dashboard-deadline-item{min-width:0}
+.dashboard-deadline-copy{min-width:0}
+.dashboard-today-copy{min-width:0}
+.dashboard-today-copy strong{font-size:11px}
+.dashboard-today-copy small{font-size:10px}
+.dashboard-today-panel .empty-state{margin:0}
+.dashboard-today-panel>.dashboard-today-empty:not(.hidden){display:grid;flex:1 1 auto;min-height:0;align-content:center;justify-items:center;gap:12px;padding:18px 12px;text-align:center}
+.dashboard-today-empty p{margin:0;color:#9295a8;font-size:12px}
+.dashboard-today-empty-mark{display:grid;width:38px;height:38px;place-items:center;border:1px solid #eeebfa;border-radius:12px;background:#f8f7ff;color:#8173d6}
+.dashboard-today-empty-mark svg{width:20px;height:20px}
+.dashboard-today-empty .primary-button{min-height:36px;padding:8px 13px}
+
+@media(max-width:1100px){
+  .topbar,.page-content{padding-inline:clamp(18px,2.5vw,28px)}
+  .content-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  .stats-grid{gap:12px}
+  .stat-card{padding:15px}
+  .progress-content{gap:clamp(16px,2.5vw,28px)}
+}
+@media(max-width:850px){
+  .content-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;height:auto;gap:14px}
+  .right-column{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+  .dashboard-today-panel,.right-column>.week-panel,.right-column>.progress-panel{grid-column:auto;grid-row:auto}
+  .dashboard-today-panel{min-height:300px;max-height:380px}
+  .right-column>.week-panel{min-height:300px}
+  .right-column>.progress-panel{min-height:220px}
+  .progress-content{padding-block:20px}
+}
+@media(max-width:600px){
+  .topbar{padding-inline:14px}
+  .page-content{padding:22px 14px}
+  .welcome-row{align-items:flex-start;gap:12px}
+  .welcome-row>div{min-width:0}
+  .welcome-row .primary-button{flex:0 0 auto;min-width:42px;min-height:42px}
+  .stats-grid{gap:9px}
+  .stat-card{min-height:116px;padding:13px}
+  .stat-foot{font-size:10px}
+  .panel{padding:16px}
+  .right-column{gap:12px}
+  .dashboard-today-panel{min-height:250px;max-height:350px}
+  .right-column>.week-panel{min-height:290px;height:auto;max-height:none}
+  .progress-content{gap:clamp(18px,7vw,32px)}
+  .donut{width:clamp(92px,28vw,112px);height:clamp(92px,28vw,112px)}
+  .progress-legend{gap:10px}
+  .subjects-toolbar,.calendar-toolbar{align-items:flex-start;flex-wrap:wrap}
+  .calendar-panel{padding:12px;overflow-x:auto}
+  .calendar-grid{min-width:560px}
+  .calendar-controls{min-width:0}
+  .calendar-date-controls{flex-wrap:wrap}
+  .calendar-date-controls h2{font-size:14px}
+  .calendar-filters{flex-wrap:wrap}
+  .tasks-workspace-heading{gap:12px}
+  .tasks-workspace-heading>div{min-width:0}
+  .subjects-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
+  .form-row{grid-template-columns:1fr}
+  .sf-auth-screen{padding:16px}
+  .sf-auth-card{padding:clamp(20px,6vw,32px);border-radius:16px}
+}
+@media(max-width:390px){
+  .topbar-search{flex-basis:min(42vw,150px);width:min(42vw,150px);min-width:95px}
+  .search-box{padding-inline:7px}
+  .topbar-actions{gap:6px}
+  .language-select{max-width:74px}
+  .welcome-row h1{font-size:20px}
+  .welcome-row .primary-button{padding-inline:9px}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panel-heading h2{font-size:14px}
+  .progress-content{gap:14px}
+  .progress-legend>div{gap:6px;font-size:10px}
+  .form-row{gap:0}
+  .calendar-panel{margin-inline:-2px;padding:9px}
+}
+@media(max-width:850px){
+  .focus-layout{grid-template-columns:minmax(0,1fr)}
+  .analytics-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .analytics-chart-grid,.analytics-lower-grid{grid-template-columns:minmax(0,1fr)}
+  .analytics-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .archive-task-card{align-items:flex-start;flex-direction:column;gap:14px}
+  .archive-task-actions{justify-content:flex-start;width:100%}
+  .profile-settings-form{padding:18px}
+  .profile-settings-grid{grid-template-columns:minmax(0,1fr)}
+  .profile-settings-field-wide{grid-column:auto}
+}
+@media(max-width:390px){
+  .analytics-overview{gap:8px}
+  .analytics-stat-card{padding:12px}
+  .calendar-date-controls h2{white-space:normal}
+}
+
+.nav-icon-overdue{display:grid;place-items:center;width:18px;height:18px;flex:0 0 18px;border:1.5px solid currentColor;border-radius:50%;font-size:11px;font-weight:700;line-height:1}
+.nav-item [data-i18n]{min-width:0;flex:1 1 auto;overflow-wrap:anywhere;line-height:1.3}
+.nav-item.active .nav-icon-overdue{border-color:currentColor}
+.overdue-nav-count{flex:0 0 auto;min-width:20px;max-width:36px;overflow:hidden;text-align:center;background:#fff4f1;border-color:#f5ded8;color:#bf6b5f}
+.dashboard-overdue-summary{display:flex;align-items:center;gap:10px;min-width:0;margin:-9px 0 18px;padding:10px 13px;border:1px solid #f2e7e4;border-radius:10px;background:#fffdfc;color:#55576c}
+.overdue-indicator-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#d47b6e;box-shadow:0 0 0 3px #fbefed}
+.dashboard-overdue-label{font-size:12px;font-weight:700}
+.dashboard-overdue-summary .dashboard-overdue-count{display:inline-grid;min-width:23px;height:23px;place-items:center;padding:0 6px;border-radius:7px;background:#fff0ed;color:#b75e53;font-size:11px;font-weight:700}
+.dashboard-overdue-accessible-count{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.dashboard-overdue-action{margin-left:auto;white-space:normal;text-align:right;font-size:11px}
+.overdue-workspace .tasks-workspace-toolbar{grid-template-columns:minmax(220px,1fr) repeat(2,minmax(145px,190px))}
+.task-open-button{display:block;width:100%;padding:0;border:0;background:transparent;color:#3e4055;text-align:left;font:inherit;font-weight:700;cursor:pointer}
+.task-open-button:hover{color:#6655d5;text-decoration:underline;text-decoration-color:#c9c1fb;text-underline-offset:3px}
+.task-workspace-row .task-due-date{color:#8d90a2}
+.overdue-workspace .task-workspace-row .task-due-date{color:#bd7167;font-weight:600}
+@media(max-width:1000px){
+  .overdue-workspace .tasks-workspace-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .overdue-workspace .tasks-search-field{grid-column:1/-1}
+}
+@media(max-width:850px){
+  .nav-item{position:relative}
+  .nav-item .overdue-nav-count{position:absolute;top:2px;right:1px;display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;font-size:9px}
+}
+@media(max-width:600px){
+  .dashboard-overdue-summary{flex-wrap:wrap;gap:8px;margin:-6px 0 14px;padding:9px 10px}
+  .dashboard-overdue-label{font-size:11px}
+  .dashboard-overdue-action{min-height:32px}
+  .overdue-workspace .tasks-workspace-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:11px}
+  .overdue-workspace .tasks-search-field{grid-column:1/-1}
+  .overdue-workspace .tasks-filter-field{min-width:0}
+  .overdue-workspace .tasks-filter-field select{min-width:0;padding-inline:6px;font-size:11px}
+}
+@media(max-width:374px){
+  .overdue-workspace .tasks-workspace-toolbar{grid-template-columns:minmax(0,1fr)}
+  .overdue-workspace .tasks-search-field{grid-column:auto}
+}
