@@ -276,6 +276,7 @@ export function initProfileSettings({ state, onProfileChanged, auth }) {
       if (result.profile) state.profile = result.profile;
       onProfileChanged(state.user, state.profile);
       if (result.profile) fillForm(result.profile, state.user);
+      if (result.profile) auth.renderProfile(state.user, result.profile);
       if (result.errors.length) {
         errorMessages = result.errors.map(({ source, error }) => ({
           key: source === "profile" ? "profile.saveError" : source === "auth" ? "profile.authUpdateError" : "profile.refreshError",

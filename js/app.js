@@ -409,6 +409,11 @@ function initializeApp() {
         hideStartupSplash();
         return;
       }
+      if (auth.isRecoveryActive()) {
+        auth.setDashboardVisible(false);
+        hideStartupSplash();
+        return;
+      }
       state.user = restored.user;
       state.profile = restored.profile;
       initializeWorkspace();

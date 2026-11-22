@@ -30,6 +30,18 @@ export async function signIn(email, password) {
   return { ...result.data, ...profileResult };
 }
 
+export async function requestPasswordReset(email, redirectTo) {
+  const { data, error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePassword(password) {
+  const { data, error } = await supabaseClient.auth.updateUser({ password });
+  if (error) throw error;
+  return data;
+}
+
 export function signOut() {
   return supabaseClient.auth.signOut();
 }

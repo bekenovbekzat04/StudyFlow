@@ -897,6 +897,7 @@ export function initTasks({ state, onDataChanged, notify }) {
   form.addEventListener("input", event => { if (event.target.id === "task-title") event.target.setCustomValidity(""); });
   form.addEventListener("submit", save);
   function handleTaskListClick(event) {
+    if (event.target.closest(".bulk-select-control")) return;
     const edit = event.target.closest("[data-edit]");
     if (edit) {
       const task = state.tasks.find(item => String(item.id) === String(edit.dataset.edit));

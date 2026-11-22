@@ -43,6 +43,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,.search-box:focus-with
 .nav-item:hover{background:#f7f6fc;color:#6655d5}
 .nav-item.active{background:var(--purple-soft);color:#6555d3}
 .nav-icon{width:20px;flex:0 0 20px;font-size:17px}
+.nav-icon svg{display:block;width:100%;height:20px}
 .topbar{border-color:var(--line)}
 .breadcrumb,.topbar-actions{min-width:0}
 .page-content{padding-block:clamp(24px,3vw,38px) 24px}

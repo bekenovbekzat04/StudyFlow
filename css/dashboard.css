@@ -104,9 +104,7 @@
   .calendar-date-controls h2{white-space:normal}
 }
 
-.nav-icon-overdue{display:grid;place-items:center;width:18px;height:18px;flex:0 0 18px;border:1.5px solid currentColor;border-radius:50%;font-size:11px;font-weight:700;line-height:1}
 .nav-item [data-i18n]{min-width:0;flex:1 1 auto;overflow-wrap:anywhere;line-height:1.3}
-.nav-item.active .nav-icon-overdue{border-color:currentColor}
 .overdue-nav-count{flex:0 0 auto;min-width:20px;max-width:36px;overflow:hidden;text-align:center;background:#fff4f1;border-color:#f5ded8;color:#bf6b5f}
 .dashboard-overdue-summary{display:flex;align-items:center;gap:10px;min-width:0;margin:-9px 0 18px;padding:10px 13px;border:1px solid #f2e7e4;border-radius:10px;background:#fffdfc;color:#55576c}
 .overdue-indicator-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#d47b6e;box-shadow:0 0 0 3px #fbefed}

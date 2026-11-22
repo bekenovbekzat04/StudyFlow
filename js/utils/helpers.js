@@ -42,3 +42,20 @@ export function getErrorMessage(error) {
   const message = error && error.message ? error.message : "Something went wrong. Please try again.";
   return message.replace(/^Error:\s*/i, "");
 }
+
+export function getAuthErrorKind(error) {
+  const code = String(error?.code || error?.error_code || "").toLowerCase();
+  const status = Number(error?.status);
+  const message = String(error?.message || "").toLowerCase();
+  if (["over_email_send_rate_limit", "over_sms_send_rate_limit", "rate_limit", "too_many_requests"].includes(code) ||
+      status === 429 || message.includes("rate limit") || message.includes("too many requests")) return "rateLimited";
+  if (["email_not_confirmed"].includes(code) ||
+      message.includes("email not confirmed") || message.includes("confirm your email")) return "emailNotConfirmed";
+  if (["invalid_credentials", "invalid_login_credentials"].includes(code) ||
+      status === 400 && (message.includes("invalid login credentials") || message.includes("invalid credentials"))) return "invalidCredentials";
+  if (["weak_password", "validation_failed"].includes(code)) return "weakPassword";
+  if (["user_already_exists", "email_exists"].includes(code)) return "duplicateRegistration";
+  if (message.includes("already been registered") || message.includes("already registered") || message.includes("user already exists")) return "duplicateRegistration";
+  if (["otp_expired", "token_expired", "email_not_allowed", "bad_jwt", "session_not_found"].includes(code)) return "invalidRecovery";
+  return "unknown";
+}
