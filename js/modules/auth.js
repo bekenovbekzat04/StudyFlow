@@ -30,7 +30,9 @@ export function initAuth({ onAuthenticated, onSignedOut, onWarning }) {
 
   function refreshProfilePopover() {
     if (currentProfileUser) {
-      $("#profile-popover-name").textContent = currentProfile?.full_name || currentProfileUser.user_metadata?.full_name || t("auth.student");
+      const profileName = String(currentProfile?.full_name || "").trim();
+      const metadataName = String(currentProfileUser.user_metadata?.full_name || "").trim();
+      $("#profile-popover-name").textContent = profileName || metadataName || t("auth.student");
       $("#profile-popover-email").textContent = currentProfileUser.email || "";
     }
     $("#profile-popover-language").textContent = ({ en: "English", ru: "Русский", kk: "Қазақша" })[getLanguage()];
@@ -138,9 +140,12 @@ export function initAuth({ onAuthenticated, onSignedOut, onWarning }) {
   function renderProfile(user, profile) {
     currentProfileUser = user;
     currentProfile = profile;
-    const fullName = profile?.full_name || user.user_metadata?.full_name || t("auth.student");
+    const profileName = String(profile?.full_name || "").trim();
+    const metadataName = String(user.user_metadata?.full_name || "").trim();
+    const actualName = profileName || metadataName;
+    const fullName = actualName || t("auth.student");
     const email = user.email || "";
-    const firstName = fullName.trim().split(/\s+/)[0] || "Student";
+    const firstName = actualName ? actualName.split(/\s+/)[0] : t("auth.student");
     let hour = new Date().getHours();
     const timezone = String(profile?.timezone || "").trim();
     if (timezone) {
@@ -182,7 +187,7 @@ export function initAuth({ onAuthenticated, onSignedOut, onWarning }) {
       profileCopy.append(name, mail);
     }
     document.querySelectorAll(".avatar").forEach(avatar => {
-      avatar.textContent = getInitials(fullName, email);
+      avatar.textContent = getInitials(actualName, email);
       avatar.setAttribute("aria-label", `${fullName} (${email})`);
     });
     refreshProfilePopover();
