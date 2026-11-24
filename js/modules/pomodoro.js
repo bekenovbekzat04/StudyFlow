@@ -1,7 +1,8 @@
 ﻿import { $ } from "../utils/dom.js";
-import { escapeHTML } from "../utils/helpers.js";
-import { t } from "../utils/i18n.js";
+import { escapeHTML, formatDue } from "../utils/helpers.js";
+import { t, getLanguage } from "../utils/i18n.js";
 import { startBreakGame, stopBreakGame } from "./breakGame.js";
+import { enhanceFilterDropdown } from "../utils/filterDropdown.js";
 
 const MODES = {
   focus: { minutes: 25 },
@@ -38,6 +39,7 @@ export function initPomodoro({ state }) {
   const resumeButton = $("#focus-resume", view);
   const taskSelect = $("#focus-task-select", view);
   const taskTitle = $("#focus-task-title", view);
+  const taskSelectDropdown = enhanceFilterDropdown(taskSelect, { variant: "subject" });
 
   function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
@@ -195,9 +197,32 @@ export function initPomodoro({ state }) {
   function refreshTasks() {
     const selectedId = taskSelect.value;
     const activeTasks = state.tasks.filter(task => task.status !== "completed");
+    const contextCounts = new Map();
+    activeTasks.forEach(task => {
+      const subjectId = task.subjectId == null ? "none" : String(task.subjectId);
+      const signature = `${task.title.trim()}\u0000${subjectId}\u0000${task.dueDate || ""}\u0000${task.priority}`;
+      contextCounts.set(signature, (contextCounts.get(signature) || 0) + 1);
+    });
     taskSelect.innerHTML = `<option value="">${t("focus.noTask")}</option>` + activeTasks
-      .map(task => `<option value="${escapeHTML(task.id)}">${escapeHTML(task.title)}</option>`).join("");
+      .map(task => {
+        const subjectId = task.subjectId == null ? "none" : String(task.subjectId);
+        const signature = `${task.title.trim()}\u0000${subjectId}\u0000${task.dueDate || ""}\u0000${task.priority}`;
+        const subject = task.subject || t("tasks.noSubject");
+        const context = [
+          subject,
+          task.dueDate ? formatDue(task.dueDate, getLanguage()) : null,
+          t(`tasks.${task.priority.toLowerCase()}`)
+        ].filter(Boolean);
+        if (contextCounts.get(signature) > 1) {
+          const created = new Date(task.createdAt);
+          if (!Number.isNaN(created.getTime())) {
+            context.push(t("tasks.createdAt", { time: created.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }));
+          }
+        }
+        return `<option value="${escapeHTML(task.id)}" data-primary="${escapeHTML(task.title)}" data-secondary="${escapeHTML(context.join(" · "))}">${escapeHTML(task.title)}</option>`;
+      }).join("");
     taskSelect.value = activeTasks.some(task => String(task.id) === selectedId) ? selectedId : "";
+    taskSelectDropdown.refresh();
     render();
   }
 

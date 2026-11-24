@@ -102,6 +102,25 @@ Object.assign(messages.kk, {
 Object.assign(messages.en, {"tasks.taskViews":"Task views","tasks.activeTab":"Active","tasks.completedTab":"Completed","tasks.noActiveTasks":"No active tasks.","tasks.noCompletedTasks":"No completed tasks yet.","tasks.returnSelectedActive":"Return to active","tasks.successReturnedActive":"{count} completed tasks returned to active.","subjects.whiteColor":"Choose a color other than white to keep subjects distinct from tasks without a subject.","tasks.subtasks":"Subtasks","tasks.subtaskAdd":"Add subtask","tasks.subtaskTitle":"Subtask title","tasks.subtaskPlaceholder":"Enter subtask title","tasks.subtaskComplete":"Mark subtask completed","tasks.subtaskDelete":"Delete subtask","tasks.subtaskMoveUp":"Move subtask up","tasks.subtaskMoveDown":"Move subtask down","tasks.subtaskProgress":"{completed} of {total} subtasks completed","tasks.subtaskTitleRequired":"Enter a title for every subtask.","tasks.completeParentConfirm":"This task has {count} unfinished subtasks. Complete the task and all its subtasks?","tasks.completeParentsConfirm":"The selected tasks have {count} unfinished subtasks in total. Complete the tasks and all their subtasks?","tasks.completeParentsConfirmEmpty":"Complete {count} selected tasks and their subtasks?"});
 Object.assign(messages.ru, {"tasks.taskViews":"Списки задач","tasks.activeTab":"Активные","tasks.completedTab":"Завершённые","tasks.noActiveTasks":"Нет активных задач.","tasks.noCompletedTasks":"Пока нет завершённых задач.","tasks.returnSelectedActive":"Вернуть в активные","tasks.successReturnedActive":"Задачи ({count}) возвращены в активные.","subjects.whiteColor":"Выберите цвет, отличный от белого, чтобы отличать предметы от задач без предмета.","tasks.subtasks":"Подзадачи","tasks.subtaskAdd":"Добавить подзадачу","tasks.subtaskTitle":"Название подзадачи","tasks.subtaskPlaceholder":"Введите название подзадачи","tasks.subtaskComplete":"Отметить подзадачу выполненной","tasks.subtaskDelete":"Удалить подзадачу","tasks.subtaskMoveUp":"Переместить подзадачу выше","tasks.subtaskMoveDown":"Переместить подзадачу ниже","tasks.subtaskProgress":"Выполнено подзадач: {completed} из {total}","tasks.subtaskTitleRequired":"Введите название для каждой подзадачи.","tasks.completeParentConfirm":"В этой задаче осталось невыполненных подзадач: {count}. Завершить задачу и все её подзадачи?","tasks.completeParentsConfirm":"В выбранных задачах всего невыполненных подзадач: {count}. Завершить задачи и все их подзадачи?","tasks.completeParentsConfirmEmpty":"Завершить выбранные задачи ({count}) и их подзадачи?"});
 Object.assign(messages.kk, {"tasks.taskViews":"Тапсырма көріністері","tasks.activeTab":"Белсенді","tasks.completedTab":"Орындалған","tasks.noActiveTasks":"Белсенді тапсырмалар жоқ.","tasks.noCompletedTasks":"Әзірге орындалған тапсырмалар жоқ.","tasks.returnSelectedActive":"Белсендіге қайтару","tasks.successReturnedActive":"{count} орындалған тапсырма белсенді күйге қайтарылды.","subjects.whiteColor":"Пәнді пәнсіз тапсырмалардан ажырату үшін ақ түстен басқа түсті таңдаңыз.","tasks.subtasks":"Қосалқы тапсырмалар","tasks.subtaskAdd":"Қосалқы тапсырма қосу","tasks.subtaskTitle":"Қосалқы тапсырма атауы","tasks.subtaskPlaceholder":"Қосалқы тапсырма атауын енгізіңіз","tasks.subtaskComplete":"Қосалқы тапсырманы орындалды деп белгілеу","tasks.subtaskDelete":"Қосалқы тапсырманы жою","tasks.subtaskMoveUp":"Қосалқы тапсырманы жоғары жылжыту","tasks.subtaskMoveDown":"Қосалқы тапсырманы төмен жылжыту","tasks.subtaskProgress":"Орындалды: {completed}/{total}","tasks.subtaskTitleRequired":"Әр қосалқы тапсырмаға атау енгізіңіз.","tasks.completeParentConfirm":"Бұл тапсырмада аяқталмаған қосалқы тапсырма: {count}. Тапсырма мен барлық қосалқы тапсырмаларын аяқтайсыз ба?","tasks.completeParentsConfirm":"Таңдалған тапсырмаларда барлығы аяқталмаған қосалқы тапсырма: {count}. Тапсырмалар мен олардың барлық қосалқы тапсырмаларын аяқтайсыз ба?","tasks.completeParentsConfirmEmpty":"Таңдалған {count} тапсырма мен олардың қосалқы тапсырмаларын аяқтайсыз ба?"});
+Object.assign(messages.en, {
+  "tasks.similarWarningTitle": "A similar task already exists.",
+  "tasks.similarWarningCopy": "You can still create this task.",
+  "tasks.createAnyway": "Create anyway",
+  "tasks.createdAt": "Created {time}"
+});
+Object.assign(messages.ru, {
+  "tasks.similarWarningTitle": "Похожая задача уже существует.",
+  "tasks.similarWarningCopy": "Вы всё равно можете создать эту задачу.",
+  "tasks.createAnyway": "Создать всё равно",
+  "tasks.createdAt": "Создано {time}"
+});
+Object.assign(messages.kk, {
+  "tasks.similarWarningTitle": "Ұқсас тапсырма бұрыннан бар.",
+  "tasks.similarWarningCopy": "Сіз бұл тапсырманы сонда да жасай аласыз.",
+  "tasks.createAnyway": "Сонда да жасау",
+  "tasks.createdAt": "Жасалған уақыты: {time}"
+});
+
 let currentLanguage = readSavedLanguage();
 
 function readSavedLanguage() {

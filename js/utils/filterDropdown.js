@@ -79,6 +79,18 @@ export function enhanceFilterDropdown(select, { variant = "neutral", getMeta = (
   }
 
   function createOptionContent(option, meta) {
+    if (option.dataset.primary && option.dataset.secondary) {
+      const content = document.createElement("span");
+      content.className = "filter-task-option";
+      const primary = document.createElement("strong");
+      primary.className = "filter-task-option-primary";
+      primary.textContent = option.dataset.primary;
+      const secondary = document.createElement("small");
+      secondary.className = "filter-task-option-secondary";
+      secondary.textContent = option.dataset.secondary;
+      content.append(primary, secondary);
+      return content;
+    }
     const content = document.createElement("span");
     content.className = "filter-option-content";
     const dot = document.createElement("i");

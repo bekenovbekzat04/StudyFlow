@@ -101,6 +101,11 @@ export function initTasks({ state, onDataChanged, notify }) {
   detailsPanel.className = "task-details-panel";
   detailsPanel.innerHTML = `<div class="task-details-backdrop-content"><div class="task-details-heading"><div><span class="eyebrow">${t("layout.workspace")}</span><h2 id="task-details-title"></h2></div><button type="button" class="close-button" id="close-task-details" aria-label="${escapeHTML(t("layout.close"))}">×</button></div><div class="task-details-meta" id="task-details-meta"></div><section class="task-details-description"><h3>${t("tasks.description")}</h3><p id="task-details-description"></p></section><section class="task-details-subtasks"><div class="task-details-subtasks-heading"><h3>${t("tasks.subtasks")}</h3><span id="task-details-subtask-progress"></span></div><div id="task-details-subtask-list" class="task-details-subtask-list"></div><div class="task-details-add-subtask"><input id="task-details-new-subtask" type="text" maxlength="200" placeholder="${escapeHTML(t("tasks.subtaskPlaceholder"))}" aria-label="${escapeHTML(t("tasks.subtaskTitle"))}"><button type="button" class="secondary-button" id="task-details-add-subtask">${t("tasks.subtaskAdd")}</button></div></section><div class="task-details-actions"><button type="button" class="secondary-button" id="task-details-edit">${t("tasks.edit")}</button></div></div>`;
   document.body.append(detailsPanel);
+  let duplicateConfirmed = false;
+  const duplicateDialog = document.createElement("dialog");
+  duplicateDialog.className = "task-duplicate-dialog";
+  duplicateDialog.innerHTML = `<div class="task-duplicate-content"><strong>${escapeHTML(t("tasks.similarWarningTitle"))}</strong><p>${escapeHTML(t("tasks.similarWarningCopy"))}</p><div class="dialog-actions"><button type="button" class="secondary-button" id="cancel-similar-task">${escapeHTML(t("tasks.cancel"))}</button><button type="button" class="primary-button" id="create-similar-task">${escapeHTML(t("tasks.createAnyway"))}</button></div></div>`;
+  document.body.append(duplicateDialog);
 
   function mapRow(row) {
     const subject = state.subjects.find(item => String(item.id) === String(row.subject_id));
@@ -378,6 +383,7 @@ export function initTasks({ state, onDataChanged, notify }) {
 
   function openDialog(task = null, { dueToday = false } = {}) {
     form.reset();
+    duplicateConfirmed = false;
     editingTaskId = task ? task.id : null;
     editingSubtasks = task?.subtasks?.map(subtask => ({ ...subtask })) || [];
     populateSubjectSelect(task?.subjectId ?? "");
@@ -573,6 +579,10 @@ export function initTasks({ state, onDataChanged, notify }) {
     overdueView.querySelector(".tasks-workspace-toolbar .tasks-filter-field:nth-child(3) span").textContent = t("overdue.priority");
     overdueSubjectFilter.setAttribute("aria-label", t("tasks.subjectFilter"));
     overduePriorityFilter.setAttribute("aria-label", t("tasks.priorityFilter"));
+    duplicateDialog.querySelector("strong").textContent = t("tasks.similarWarningTitle");
+    duplicateDialog.querySelector("p").textContent = t("tasks.similarWarningCopy");
+    $("#cancel-similar-task").textContent = t("tasks.cancel");
+    $("#create-similar-task").textContent = t("tasks.createAnyway");
     overdueView.querySelector(".tasks-result-heading h2").textContent = t("overdue.listTitle");
     $("#close-task-details").setAttribute("aria-label", t("layout.close"));
     detailsPanel.querySelector(".task-details-description h3").textContent = t("tasks.description");
@@ -622,6 +632,20 @@ export function initTasks({ state, onDataChanged, notify }) {
       if (subject && !state.subjects.some(item => String(item.id) === String(subject.id))) {
         state.subjects.push(subject);
         state.subjects.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      if (!editing && !duplicateConfirmed) {
+        const similar = state.tasks.find(task =>
+          task.deletedAt == null &&
+          task.status !== "completed" &&
+          task.title.trim() === title &&
+          String(task.subjectId || "") === String(subject?.id || "") &&
+          (task.dueDate || "") === ($("#task-date").value || "") &&
+          task.priority === normalizePriority($("#task-priority").value)
+        );
+        if (similar) {
+          duplicateDialog.showModal();
+          return;
+        }
       }
       const task = {
         subject_id: subject?.id ?? null,
@@ -789,6 +813,12 @@ export function initTasks({ state, onDataChanged, notify }) {
   $("#tasks-add-task", view).addEventListener("click", () => openDialog());
   $("#close-task-dialog").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
   $("#cancel-task").addEventListener("click", () => { editingTaskId = null; dialog.close(); });
+  $("#cancel-similar-task").addEventListener("click", () => duplicateDialog.close());
+  $("#create-similar-task").addEventListener("click", () => {
+    duplicateConfirmed = true;
+    duplicateDialog.close();
+    form.requestSubmit();
+  });
   $("#close-task-details").addEventListener("click", closeDetailsPanel);
   detailsPanel.addEventListener("cancel", event => {
     event.preventDefault();
