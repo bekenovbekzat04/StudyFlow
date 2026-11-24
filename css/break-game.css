@@ -1,0 +1,12 @@
+.break-game-panel{width:min(100%,340px);min-width:0;margin:auto}
+.break-game-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.break-game-indicator{padding:5px 8px;border-radius:6px;background:#f1efff;color:#7564e8;font-size:9px;font-weight:800;letter-spacing:1px}
+.break-game-score{color:#9295a8;font-size:11px}.break-game-score strong{margin-left:4px;color:#414258;font-size:14px;font-variant-numeric:tabular-nums}
+.break-game-canvas{display:block;width:100%;height:220px;border:1px solid #efedf7;border-radius:10px;background:#fbfaff;box-shadow:inset 0 0 20px #7765e908;touch-action:none;cursor:pointer}
+.break-game-canvas:focus-visible{outline:3px solid #9789ef38;outline-offset:2px}
+.break-game-over{display:grid;justify-items:center;gap:8px;margin:-142px auto 92px;width:140px;padding:12px;border:1px solid #e8e5f4;border-radius:10px;background:#ffffffed;box-shadow:0 8px 24px #2e294f12;position:relative;z-index:2}
+.break-game-over strong{font:700 12px Manrope,sans-serif;color:#414258}
+.break-game-restart{border:0;border-radius:7px;background:#7765e9;color:#fff;padding:8px 12px;font:700 10px "DM Sans",sans-serif;cursor:pointer}
+.break-game-restart:hover{background:#6553d7}
+.break-game-instruction{margin:9px 0 0;text-align:center;color:#a0a2b2;font-size:9px}
+@media(max-width:850px){.break-game-panel{margin:0 auto}.break-game-canvas{height:220px}}

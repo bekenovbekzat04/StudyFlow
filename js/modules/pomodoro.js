@@ -1,6 +1,7 @@
 ﻿import { $ } from "../utils/dom.js";
 import { escapeHTML } from "../utils/helpers.js";
 import { t } from "../utils/i18n.js";
+import { startBreakGame, stopBreakGame } from "./breakGame.js";
 
 const MODES = {
   focus: { minutes: 25 },
@@ -13,7 +14,7 @@ export function initPomodoro({ state }) {
   const view = document.createElement("section");
   view.id = "focus-mode-page";
   view.className = "focus-page hidden";
-  view.innerHTML = `<div class="focus-page-heading"><div><h1>Focus Mode</h1><p>A little focused time goes a long way.</p></div></div><div class="focus-layout"><section class="focus-timer-card" aria-label="Pomodoro timer"><div class="focus-mode-tabs" role="group" aria-label="Timer mode"><button type="button" data-pomodoro-mode="focus" class="active">Focus</button><button type="button" data-pomodoro-mode="short">Short Break</button><button type="button" data-pomodoro-mode="long">Long Break</button></div><div class="focus-timer-ring" id="focus-timer-ring"><div class="focus-timer-face"><span id="focus-time">25:00</span><small id="focus-mode-label">Focus</small></div></div><div class="focus-controls"><button type="button" class="primary-button" id="focus-start">Start</button><button type="button" class="secondary-button hidden" id="focus-pause">Pause</button><button type="button" class="primary-button hidden" id="focus-resume">Resume</button><button type="button" class="secondary-button" id="focus-reset">Reset</button></div><p class="focus-status" id="focus-status" role="status" aria-live="polite">Ready when you are.</p></section><aside class="focus-task-card"><span class="eyebrow">YOUR SESSION</span><h2>What are you focusing on?</h2><p>Select one of your current tasks to keep it in view while you work.</p><label class="field-label" for="focus-task-select">Task<select id="focus-task-select"><option value="">${t("focus.noTask")}</option></select></label><div class="focus-selected-task"><span class="focus-selected-mark">✦</span><div><small>Currently selected</small><strong id="focus-task-title">No task selected</strong></div></div></aside></div>`;
+  view.innerHTML = `<div class="focus-page-heading"><div><h1>Focus Mode</h1><p>A little focused time goes a long way.</p></div></div><div class="focus-layout"><section class="focus-timer-card" aria-label="Pomodoro timer"><div class="focus-mode-tabs" role="group" aria-label="Timer mode"><button type="button" data-pomodoro-mode="focus" class="active">Focus</button><button type="button" data-pomodoro-mode="short">Short Break</button><button type="button" data-pomodoro-mode="long">Long Break</button></div><div class="focus-timer-ring" id="focus-timer-ring"><div class="focus-timer-face"><span id="focus-time">25:00</span><small id="focus-mode-label">Focus</small></div></div><div class="focus-controls"><button type="button" class="primary-button" id="focus-start">Start</button><button type="button" class="secondary-button hidden" id="focus-pause">Pause</button><button type="button" class="primary-button hidden" id="focus-resume">Resume</button><button type="button" class="secondary-button" id="focus-reset">Reset</button></div><p class="focus-status" id="focus-status" role="status" aria-live="polite">Ready when you are.</p></section><aside class="focus-task-card"><div class="focus-task-selection"><span class="eyebrow">YOUR SESSION</span><h2>What are you focusing on?</h2><p>Select one of your current tasks to keep it in view while you work.</p><label class="field-label" for="focus-task-select">Task<select id="focus-task-select"><option value="">${t("focus.noTask")}</option></select></label><div class="focus-selected-task"><span class="focus-selected-mark">✦</span><div><small>Currently selected</small><strong id="focus-task-title">No task selected</strong></div></div></div><div id="break-game-panel" class="break-game-panel hidden" aria-label="Break mini-game"></div></aside></div>`;
   pageContent.append(view);
 
   const durationSeconds = () => MODES[mode].minutes * 60;
@@ -26,6 +27,7 @@ export function initPomodoro({ state }) {
   let completionPlayed = false;
   let audioContext = null;
   let statusKey = "focus.ready";
+  let breakGameAllowed = false;
 
   const timeDisplay = $("#focus-time", view);
   const modeLabel = $("#focus-mode-label", view);
@@ -55,6 +57,22 @@ export function initPomodoro({ state }) {
     resumeButton.classList.toggle("hidden", !paused);
     view.querySelectorAll("[data-pomodoro-mode]").forEach(button => button.classList.toggle("active", button.dataset.pomodoroMode === mode));
     taskTitle.textContent = state.tasks.find(task => String(task.id) === taskSelect.value)?.title || t("focus.noTask");
+    syncBreakGame();
+  }
+
+  function syncBreakGame() {
+    const taskSelection = view.querySelector(".focus-task-selection");
+    const gamePanel = $("#break-game-panel", view);
+    const isBreak = mode === "short" || mode === "long";
+    const isBreakActive = isBreak && breakGameAllowed && intervalId !== null && !finished && !view.classList.contains("hidden");
+    taskSelection.classList.toggle("hidden", isBreakActive);
+    gamePanel.classList.toggle("hidden", !isBreakActive);
+
+    if (isBreakActive) {
+      startBreakGame(gamePanel);
+    } else {
+      stopBreakGame(gamePanel);
+    }
   }
 
   function clearTimer() {
@@ -92,6 +110,8 @@ export function initPomodoro({ state }) {
   function complete() {
     if (finished) return;
     clearTimer();
+    breakGameAllowed = false;
+    stopBreakGame($("#break-game-panel", view));
     remainingSeconds = 0;
     paused = false;
     finished = true;
@@ -127,6 +147,7 @@ export function initPomodoro({ state }) {
     statusKey = "focus.inProgress";
     deadline = Date.now() + remainingSeconds * 1000;
     intervalId = window.setInterval(tick, 1000);
+    breakGameAllowed = mode === "short" || mode === "long";
     render();
   }
 
@@ -139,6 +160,7 @@ export function initPomodoro({ state }) {
       return;
     }
     clearTimer();
+    breakGameAllowed = false;
     paused = remainingSeconds > 0;
     finished = remainingSeconds === 0;
     statusKey = finished ? "focus.completed" : "focus.paused";
@@ -147,6 +169,7 @@ export function initPomodoro({ state }) {
 
   function reset() {
     clearTimer();
+    breakGameAllowed = false;
     remainingSeconds = durationSeconds();
     paused = false;
     finished = false;
@@ -159,6 +182,8 @@ export function initPomodoro({ state }) {
     if (!MODES[nextMode]) return;
     clearTimer();
     mode = nextMode;
+    breakGameAllowed = false;
+    if (mode === "focus") stopBreakGame($("#break-game-panel", view));
     remainingSeconds = durationSeconds();
     paused = false;
     finished = false;
@@ -197,7 +222,7 @@ export function initPomodoro({ state }) {
     $("#focus-reset", view).textContent = t("focus.reset");
     view.querySelector(".focus-task-card .eyebrow").textContent = t("focus.session");
     view.querySelector(".focus-task-card h2").textContent = t("focus.question");
-    view.querySelector(".focus-task-card>p").textContent = t("focus.description");
+    view.querySelector(".focus-task-selection > p").textContent = t("focus.description");
     view.querySelector(".focus-task-card label").childNodes[0].textContent = t("focus.task");
     view.querySelector(".focus-selected-task small").textContent = t("focus.selected");
     refreshTasks();
@@ -210,6 +235,8 @@ export function initPomodoro({ state }) {
     refreshLanguage,
     stop() {
       clearTimer();
+      breakGameAllowed = false;
+      stopBreakGame($("#break-game-panel", view));
       paused = false;
       finished = false;
       remainingSeconds = durationSeconds();
@@ -225,6 +252,8 @@ export function initPomodoro({ state }) {
     },
     destroy() {
       clearTimer();
+      breakGameAllowed = false;
+      stopBreakGame($("#break-game-panel", view));
       if (audioContext) { audioContext.close().catch(() => {}); audioContext = null; }
       view.remove();
     }
