@@ -157,6 +157,7 @@ export function initTasks({ state, onDataChanged, notify }) {
     if (!subjectExists) state.taskSubjectFilter = "all";
     subjectFilter.value = state.taskSubjectFilter || "all";
     const statusFilter = $("#task-status-filter", view);
+    statusFilter.closest(".tasks-filter-field").classList.toggle("hidden", taskTab === "completed");
     const statusOptions = taskTab === "completed" ? [["completed", t("tasks.completed")]] : [["todo", t("tasks.toDo")], ["progress", t("tasks.inProgress")]];
     if (state.activeFilter !== "all" && !statusOptions.some(([value]) => value === state.activeFilter)) state.activeFilter = "all";
     statusFilter.innerHTML = `<option value="all">${t("tasks.allStatuses")}</option>` + statusOptions.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
